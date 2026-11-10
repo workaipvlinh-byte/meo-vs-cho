@@ -6,7 +6,7 @@ Màn hình dọc 1080×1920, chạy bằng PixiJS. Thử với khoảng 2.000 nh
 
 ## Cách chơi
 
-- **Chọn phe:** `1`, `1111`, `mèo` vào Mèo; `2`, `2222`, `chó` vào Chó. Ai chưa chọn mà comment, thả tim hay tặng quà thì được xếp vào phe đang ít người. Đổi phe được, 20 giây đổi 1 lần.
+- **Chọn phe:** comment đúng `1` vào Mèo, đúng `2` vào Chó (`1111`, `1 nha`, `mèo` không tính là chọn phe). Ai chưa chọn mà comment, thả tim hay tặng quà thì được xếp vào phe đang ít người. Đổi phe được, 20 giây đổi 1 lần.
 - **Comment:** comment nào cũng được cộng cho phe, kể cả gõ liên tục. Mỗi người thả tối đa 1 đội 5 lính mỗi 1,5 giây.
 - **Tim:** mỗi phe 1 thanh. 5.000 tim ra chiêu 1 (Mưa cá khô / Mưa xương), 15.000 ra chiêu 2 (Cào băng / Sủa chấn động), 50.000 gọi Mèo chúa / Chó chúa.
 - **Quà:** 1–9 xu +20 lính, 10–19 xu +60 lính, 20 xu chiêu 1, 50 xu chiêu 2, 100 xu con chúa, 199 xu con chúa kèm chiêu 2.

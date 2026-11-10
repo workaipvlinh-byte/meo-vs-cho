@@ -234,12 +234,9 @@ const PHASES = [['HIỆP 1', 'Khởi động'], ['HIỆP 2', 'Tăng tốc'], ['H
 // ================= pure helpers (self-checked) =================
 const lower = s => String(s).toLowerCase();
 function parseSide(text) {
-  const t = lower(text).normalize('NFKC').trim();   // NFKC turns full-width "１" into "1"
-  const m = t.match(/^(1+|2+)(?!\d)/);              // "1", "1111", "1 nha", "2❤️"; "12" or "21" stay unknown
-  if (m) return m[1][0] === '1' ? ICE : FIRE;
-  if (t.includes('mèo') || t === 'meo' || t.includes('băng')) return ICE;
-  if (t.includes('chó') || t === 'cho' || t.includes('lửa')) return FIRE;
-  return null;
+  // owner's rule: only a comment that is exactly "1" or "2" picks a side ("1111", "1 nha", "mèo" do not)
+  const t = String(text).normalize('NFKC').trim();   // NFKC turns full-width "１" into "1"
+  return t === '1' ? ICE : t === '2' ? FIRE : null;
 }
 const isBad = s => { const t = lower(s); return C.BAD.some(w => t.includes(w)); };
 // gift price -> 0 +20 units, 1 +60 units, 2 skill 1, 3 skill 2, 4 boss, 5 boss + skill 2
@@ -257,8 +254,7 @@ function heartStep(before, add) {
 }
 // round index from elapsed share of the match: 0,1,2 thirds, 3 = final rush
 const phaseOf = (frac) => frac >= 1 - C.FINAL_FRAC ? 3 : frac >= 2 / 3 ? 2 : frac >= 1 / 3 ? 1 : 0;
-console.assert(parseSide('1') === 0 && parseSide(' 2 ') === 1 && parseSide('1111') === 0 && parseSide('2222') === 1 && parseSide('1 nha') === 0 && parseSide('2❤️') === 1 && parseSide('１') === 0
-  && parseSide('Mèo ơi') === 0 && parseSide('chó') === 1 && parseSide('12') === null && parseSide('21') === null && parseSide('hi') === null && parseSide('100') === null, 'parseSide');
+console.assert(parseSide('1') === 0 && parseSide(' 2 ') === 1 && parseSide('１') === 0 && parseSide('1111') === null && parseSide('11111111111111') === null && parseSide('1 nha') === null && parseSide('mèo') === null && parseSide('12') === null && parseSide('hi') === null, 'parseSide');
 console.assert(giftTier(1) === 0 && giftTier(10) === 1 && giftTier(19) === 1 && giftTier(20) === 2 && giftTier(50) === 3 && giftTier(99) === 3 && giftTier(100) === 4 && giftTier(199) === 5, 'giftTier');
 console.assert(heartStep(4999, 1).fired.join() === '0' && heartStep(0, 4999).fired.length === 0 && heartStep(14000, 40000).v === 4000 && heartStep(14000, 40000).fired.join() === '1,2' && heartStep(0, 60000).fired.join() === '0,1,2,0', 'heartStep');
 console.assert(phaseOf(0) === 0 && phaseOf(.34) === 1 && phaseOf(.7) === 2 && phaseOf(.95) === 3, 'phaseOf');

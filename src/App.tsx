@@ -8,7 +8,7 @@ import { GameStage } from './game/GameStage';
 import { GameControls, ViewSwitch, type ViewMode } from './game/GameControls';
 
 // Live tự động 10/50/100 người: comment đủ kiểu như người thật, chạy 1 trận 5 phút
-const AUTO_COMMENTS = ['1', '2', '1111', '2222', '1 nha', 'hay quá', 'mèo đâu', 'cố lên'];
+const AUTO_COMMENTS = ['1111', '1 nha', 'hay quá', 'mèo đâu', 'cố lên'];
 const AUTO = {
   durationMs: 300_000,
   comment: (i: number) => (Math.random() < 0.7 ? String((i % 2) + 1) : AUTO_COMMENTS[Math.floor(Math.random() * AUTO_COMMENTS.length)]),

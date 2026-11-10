@@ -150,7 +150,7 @@ export function GameControls({ prefs }: { prefs: Record<string, string> }) {
       <Row title="Người xem giả">
         <B onClick={() => asPlayer('1')}>Gõ "1"</B>
         <B onClick={() => asPlayer('2')}>Gõ "2"</B>
-        <B onClick={() => asPlayer('1111')}>Gõ "1111"</B>
+        <B onClick={() => asPlayer('1111')}>Gõ "1111" (không chọn phe)</B>
         <B onClick={() => asPlayer('hay quá')}>Comment thường (chưa chọn phe)</B>
         <B onClick={() => asPlayer('1', (u) => emitTest('like', { ...u, likeCount: 1000 }))}>+1k tim phe Mèo</B>
         <B onClick={() => asPlayer('2', (u) => emitTest('like', { ...u, likeCount: 1000 }))}>+1k tim phe Chó</B>

@@ -8,7 +8,7 @@ Game PK 2 phe trên TikTok LIVE. Người xem gõ 1 vào phe Mèo (trái, nền 
 
 ## Luật chơi
 
-- Gõ `1` / `1111` / `mèo` → phe Mèo; `2` / `2222` / `chó` → phe Chó. Ai chưa chọn mà comment, thả tim hay tặng quà thì được xếp vào phe đang ít người hơn. Đổi phe được, tối đa 20 giây 1 lần.
+- Chỉ comment đúng `1` → phe Mèo, đúng `2` → phe Chó (`1111`, `1 nha`, `mèo` không chọn phe). Ai chưa chọn mà comment, thả tim hay tặng quà thì được xếp vào phe đang ít người hơn. Đổi phe được, tối đa 20 giây 1 lần.
 - **Comment nào cũng được đếm** cho phe (số 💬 dưới sân). Lính: mỗi người tối đa 1 đội 5 con / 1,5 giây.
 - Tim: mỗi phe 1 thanh. 5.000 tim ra chiêu 1 (Mưa cá khô / Mưa xương), 15.000 ra chiêu 2 (Cào băng / Sủa chấn động), 50.000 gọi Mèo chúa / Chó chúa rồi thanh về 0. Hiệp 3 tim x1,5, 3 phút cuối tim x2. Phe đang thua nhiều được tim x1,3 (dấu ⚡).
 - Quà: 1–9 xu +20 lính · 10–19 xu +60 lính · 20–49 xu chiêu 1 · 50–99 xu chiêu 2 · 100–198 xu con chúa · 199+ con chúa kèm chiêu 2. Quà cộng thêm 10 tim/xu vào thanh.
@@ -49,4 +49,5 @@ Game PK 2 phe trên TikTok LIVE. Người xem gõ 1 vào phe Mèo (trái, nền 
 - 10/11/2026: MC giọng Adam bựa (VieNeu), hài, có biểu cảm, chỉnh được tốc độ.
 - 10/11/2026: Top 1 mỗi phe hiện to, top 2–3 ké nhỏ, đặt ngay dưới nút chọn phe.
 - 10/11/2026: Đếm comment là quan trọng nhất: comment nào cũng phải tính (có nút kiểm tra 200 comment ở trang điều khiển).
+- 10/11/2026: Chỉ nhận đúng "1" / "2" để chọn phe; gõ dãy "1111…" không chọn phe (vẫn tính 1 comment cho phe người đó đang ở).
 - Chưa chốt: ô quà ghi "20 xu" hay đổi sang hình món quà (như Đại Chiến Con Giáp) cho an toàn chính sách TikTok.
