@@ -11,7 +11,8 @@ export const GAME = {
   defaultChannelName: 'kênh mình',
 
   // MC mặc định (đổi ở trang điều khiển, server nhớ). Giọng của VieNeu-TTS; VieNeu chưa bật thì tự đọc bằng Edge.
-  mc: { mcOn: '1', mcVoice: 'Adam bựa', mcSpeed: '1.15', mcExpr: '0.95' } as Record<string, string>,
+  // Âm lượng: nhạc nền / tiếng hiệu ứng (0 tới 1.5) và giọng MC (0 tới 1). Nhạc nền mặc định một nửa cho MC rõ.
+  mc: { mcOn: '1', mcVoice: 'Adam bựa', mcSpeed: '1.15', mcExpr: '0.95', musicVol: '0.5', sfxVol: '1', mcVol: '1' } as Record<string, string>,
   voices: ['Adam bựa', 'Thiện Minh', 'Hải Đăng', 'Trúc Ly', 'Mai Anh'],
 
   // Comment có lời cầu chúc -> đọc 1 câu chúc soạn sẵn. KHÔNG BAO GIỜ đọc nguyên văn comment.

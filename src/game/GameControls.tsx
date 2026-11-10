@@ -22,10 +22,11 @@ const GIFTS = [
 ];
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-export function GameControls() {
+export function GameControls({ prefs }: { prefs: Record<string, string> }) {
   const [side, setSide] = useState<'1' | '2'>('1');
   const [count, setCount] = useState('');
-  const [mc, setMc] = useState<Record<string, string>>({ ...GAME.mc });
+  const [mc, setMc] = useState<Record<string, string>>({ ...GAME.mc, ...prefs });
+  useEffect(() => setMc((m) => ({ ...m, ...prefs })), [prefs]); // server gửi lại cài đặt đã lưu
   const sim = useRef<(() => void) | null>(null);
   const [simInfo, setSimInfo] = useState('');
 
@@ -178,6 +179,12 @@ export function GameControls() {
         {simInfo && <div className="w-full text-sm text-amber-300">{simInfo}</div>}
       </Row>
 
+      <Row title="Âm lượng trên live (đổi ngay, server nhớ cho lần sau)">
+        <Vol label="🎵 Nhạc nền" value={mc.musicVol} max={1.5} onChange={(v) => saveMc({ musicVol: v })} />
+        <Vol label="💥 Tiếng hiệu ứng" value={mc.sfxVol} max={1.5} onChange={(v) => saveMc({ sfxVol: v })} />
+        <Vol label="🗣 Giọng MC" value={mc.mcVol} max={1} onChange={(v) => saveMc({ mcVol: v })} />
+      </Row>
+
       <Row title="MC (giọng VieNeu, cần bật E:\02_AI\VieNeu-TTS; chưa bật thì tự đọc giọng Edge)">
         <B onClick={() => saveMc({ mcOn: mc.mcOn === '0' ? '1' : '0' })} on={mc.mcOn !== '0'}>
           {mc.mcOn === '0' ? '🔇 MC đang tắt' : '🗣 MC đang bật'}
@@ -223,6 +230,17 @@ export function ViewSwitch({ mode, onChange }: { mode: ViewMode; onChange: (m: V
         </button>
       ))}
     </div>
+  );
+}
+
+// thanh kéo âm lượng: 0 = tắt hẳn, hiện theo phần trăm
+function Vol({ label, value, max, onChange }: { label: string; value: string; max: number; onChange: (v: string) => void }) {
+  return (
+    <label className="flex w-full items-center gap-3 text-sm">
+      <span className="w-36 shrink-0">{label}</span>
+      <input type="range" min="0" max={max} step="0.05" value={value} onChange={(e) => onChange(e.target.value)} className="flex-1" />
+      <span className="w-12 text-right tabular-nums">{Math.round(Number(value) * 100)}%</span>
+    </label>
   );
 }
 

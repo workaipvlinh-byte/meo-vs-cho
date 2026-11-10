@@ -708,6 +708,7 @@ function spawnDragon(t, big, owner) {
   const y = rnd(C.FIELD[0] + 230, C.FIELD[1] - 110);   // keep the name tag clear of the side chips
   const d = { t, x, y, hp: max, max, big, k, c, body, wl, wr, bar, label, aura, rays, cd: 1.6, stop: false, intro: 1.25 };
   setTimeout(() => sfx('whoosh'), 700);   // falling whistle just before the slam
+  cry(t, true);
   c.scale.set(k * .2); c.alpha = 0;
   dragonLayer.addChild(c); dragons.push(d);
   summonCircle(x, y + 40 * k, t, big);
@@ -1009,6 +1010,7 @@ function onGift(user, name, coin, n) {
 function castSkill(t, i, owner) {
   if (i === 2) { if (!spawnDragon(t, true, owner)) castSkill(t, 1, owner); return; }   // boss cap reached: fall back to skill 2
   const col = t ? 0xff8a3a : 0x8fe6ff, mid = (C.FIELD[0] + C.FIELD[1]) / 2;
+  cry(t, true);
   if (i === 0) { spellRain(t); sfx('whoosh'); screenFlash(col, .18); }
   else {
     sweepWave(t); sfx(t === ICE ? 'slash' : 'whooshHit'); sfx('spell'); screenFlash(col, .35);
@@ -1397,19 +1399,23 @@ const SND = {
   power: ['ribhavagrawal-power-up-type-1-230548.mp3', 2.2, .55], coin: ['yodguard-coin-collect-3-540190.mp3', 1, .45],
   win: ['emand_edroff-victory-bell-success-fanfare-576275.mp3', 6, .6], heal: ['vadim_makes_sound-fantasy-healing-spell-cast-1-547831.mp3', 3, .5],
   clash1: ['kiem1.mp3', .8, .14], clash2: ['kiem2.mp3', .8, .14],
-};   // name: [file, max seconds (0 = loop), volume]
+  meo: ['meo.mp3', 2, .5], gau: ['gau.mp3', 2, .5],   // optional; missing -> synthesized cries below
+};
+const OPTIONAL_SND = new Set(['meo', 'gau']);   // name: [file, max seconds (0 = loop), volume]
 let AC = null, sndOn = false, master = null, duckG = null, loops = {}, lastSfx = {};
 const BUF = {};
 async function loadSounds() {
   await Promise.all(Object.entries(SND).map(async ([k, [f]]) => {
     if (BUF[k]) return;
-    try { BUF[k] = await AC.decodeAudioData(await (await fetch('sound/' + f)).arrayBuffer()); } catch (e) { console.warn('sound missing', f); }
+    try { BUF[k] = await AC.decodeAudioData(await (await fetch('sound/' + f)).arrayBuffer()); } catch (e) { if (!OPTIONAL_SND.has(k)) console.warn('sound missing', f); }
   }));
 }
+// owner's volume knobs (0..1.5), set from the control page: background music, effects, MC voice
+const VOL = { music: .5, sfx: 1, mc: 1 };
 function sfx(name) {
-  if (!sndOn || !BUF[name]) return;
+  if (!sndOn || !BUF[name] || VOL.sfx <= 0) return;
   const t0 = AC.currentTime; if (t0 - (lastSfx[name] || 0) < .12) return; lastSfx[name] = t0;   // 500 viewers at once stay one sound
-  const [, max, vol] = SND[name], src = AC.createBufferSource(), g = AC.createGain();
+  const [, max, base] = SND[name], vol = base * VOL.sfx, src = AC.createBufferSource(), g = AC.createGain();
   src.buffer = BUF[name]; src.playbackRate.value = .95 + Math.random() * .1; g.gain.value = vol;
   if (max) { g.gain.setValueAtTime(vol, t0 + max - .25); g.gain.linearRampToValueAtTime(0, t0 + max); }
   src.connect(g).connect(master); src.start(t0, 0, max || undefined);
@@ -1423,8 +1429,8 @@ function loop(name, vol) {
 let musicState = ['round', 0];
 function music(kind, r) {
   musicState = [kind, r]; if (!sndOn) return;
-  if (kind === 'end') { loop('music', .12); loop('drum', 0); return; }
-  loop('music', SND.music[2]); loop('drum', [0, .12, .22, .34][r]);
+  if (kind === 'end') { loop('music', .12 * VOL.music); loop('drum', 0); return; }
+  loop('music', SND.music[2] * VOL.music); loop('drum', [0, .12, .22, .34][r] * VOL.music);
 }
 async function soundOn(on) {
   if (on) {
@@ -1433,6 +1439,54 @@ async function soundOn(on) {
     sndOn = true; await loadSounds(); music(...musicState);
   } else { sndOn = false; for (const g of Object.values(loops)) g.gain.setTargetAtTime(0, AC.currentTime, .2); }
 }
+// ---- cartoon "meo meo" / "gâu gâu" over the music (synthesized; real meo.mp3 / gau.mp3 win if present) ----
+// They ride the music bus: follow the music volume knob and dip under the MC.
+function cry(t, loud) {
+  if (!sndOn || VOL.music <= 0) return;
+  const pan = t === ICE ? -.6 : .6, lvl = (loud ? .32 : .16) * VOL.music;
+  const name = t === ICE ? 'meo' : 'gau';
+  if (BUF[name]) {   // real recording
+    const src = AC.createBufferSource(), g = AC.createGain(), pn = AC.createStereoPanner(); src.buffer = BUF[name];
+    src.playbackRate.value = .92 + Math.random() * .16; g.gain.value = lvl * 2; pn.pan.value = pan;
+    src.connect(g).connect(pn).connect(duckG); src.start(); return;
+  }
+  const t0 = AC.currentTime, out = AC.createGain(), pn = AC.createStereoPanner();
+  pn.pan.value = pan; out.gain.value = lvl; out.connect(pn).connect(duckG);
+  const n = Math.random() < .5 ? 2 : 1;   // "meo meo" or "meo"
+  for (let k = 0; k < n; k++) t === ICE ? meow(out, t0 + k * .55) : woof(out, t0 + k * .28);
+}
+// meow: rising-then-falling saw through a moving vowel filter ("mi-a-o")
+function meow(out, t0) {
+  const o = AC.createOscillator(), f = AC.createBiquadFilter(), g = AC.createGain(), base = 520 + Math.random() * 160;
+  o.type = 'sawtooth';
+  o.frequency.setValueAtTime(base, t0); o.frequency.linearRampToValueAtTime(base * 1.6, t0 + .14); o.frequency.linearRampToValueAtTime(base * 1.1, t0 + .42);
+  f.type = 'bandpass'; f.Q.value = 5;
+  f.frequency.setValueAtTime(1300, t0); f.frequency.linearRampToValueAtTime(2000, t0 + .15); f.frequency.linearRampToValueAtTime(900, t0 + .45);
+  g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(2.4, t0 + .05); g.gain.setValueAtTime(2.4, t0 + .3); g.gain.exponentialRampToValueAtTime(.0001, t0 + .48);   // narrow vowel filter eats level: boost to match the bark
+  o.connect(f).connect(g).connect(out); o.start(t0); o.stop(t0 + .5);
+}
+// woof: short low growl-bark with a falling pitch and a breathy hit
+function woof(out, t0) {
+  const o = AC.createOscillator(), f = AC.createBiquadFilter(), g = AC.createGain(), base = 230 + Math.random() * 60;
+  o.type = 'square'; o.frequency.setValueAtTime(base, t0); o.frequency.exponentialRampToValueAtTime(base * .55, t0 + .16);
+  f.type = 'lowpass'; f.frequency.setValueAtTime(1400, t0); f.frequency.exponentialRampToValueAtTime(500, t0 + .16);
+  g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(.9, t0 + .012); g.gain.exponentialRampToValueAtTime(.0001, t0 + .19);
+  o.connect(f).connect(g).connect(out); o.start(t0); o.stop(t0 + .2);
+  const b = AC.createBuffer(1, AC.sampleRate * .12, AC.sampleRate), d = b.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
+  const ns = AC.createBufferSource(), nf = AC.createBiquadFilter(), ng = AC.createGain();
+  ns.buffer = b; nf.type = 'bandpass'; nf.frequency.value = 700; nf.Q.value = 1.2; ng.gain.value = .5;
+  ns.connect(nf).connect(ng).connect(out); ns.start(t0);
+}
+// every 6-14s (3-7s in the final rush) one side calls out; the side that is ahead calls more often
+let nextCry = 0;
+setInterval(() => {
+  if (!sndOn || !S || S.phase !== 'fight' || gameNow < nextCry) return;
+  nextCry = gameNow + (S.round === 3 ? 3 + Math.random() * 4 : 6 + Math.random() * 8);
+  const lead = count[0] > count[1] ? 0 : 1;
+  cry(Math.random() < .65 ? lead : 1 - lead, false);
+}, 1000);
+
 // tiny cartoon "poc" when a cat and a dog bump: soft, short, pitch and left/right follow the hit; at most ~12 per second
 let lastBump = 0;
 function bump(x) {
@@ -1441,7 +1495,7 @@ function bump(x) {
   const o = AC.createOscillator(), g = AC.createGain(), pan = AC.createStereoPanner ? AC.createStereoPanner() : null;
   const f = rnd(260, 520); o.type = 'sine';
   o.frequency.setValueAtTime(f, t0); o.frequency.exponentialRampToValueAtTime(f * .35, t0 + .07);
-  g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(rnd(.06, .1), t0 + .005); g.gain.exponentialRampToValueAtTime(.0001, t0 + .09);
+  g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(Math.max(.0002, rnd(.06, .1) * VOL.sfx), t0 + .005); g.gain.exponentialRampToValueAtTime(.0001, t0 + .09);
   let node = o.connect(g); if (pan) { pan.pan.value = Math.max(-.8, Math.min(.8, x / C.W * 2 - 1)); node = node.connect(pan); }
   node.connect(master); o.start(t0); o.stop(t0 + .1);
 }
@@ -1474,6 +1528,8 @@ window.GAME_API = {
     if (p.mcVoice) { const sel = $('mcVoice'); if (![...sel.options].some(o => o.value === p.mcVoice)) sel.add(new Option(p.mcVoice, p.mcVoice)); sel.value = p.mcVoice; }
     if (p.mcSpeed) $('mcSpeed').value = p.mcSpeed;
     if (p.mcExpr) $('mcExpr').value = p.mcExpr;
+    for (const [k, key] of [['music', 'musicVol'], ['sfx', 'sfxVol'], ['mc', 'mcVol']]) if (p[key] !== undefined && p[key] !== '' && isFinite(+p[key])) VOL[k] = Math.max(0, Math.min(1.5, +p[key]));
+    music(...musicState);   // apply the new music level right away
   },
   setLength(sec) { matchLen = Math.max(60, Math.min(3600, +sec || C.MATCH_SEC)); newMatch(); },
   jump(j) { S.time = matchLen * (1 - (j === 3 ? 1 - C.FINAL_FRAC : j === 1.5 ? C.RAT_AT : j / 3)) - .5; },
@@ -1584,7 +1640,7 @@ async function mcNext() {
     const r = await fetch('/api/tts?' + q);
     if (!r.ok) throw new Error('giọng đọc lỗi ' + r.status);
     const url = URL.createObjectURL(await r.blob()), a = new Audio(url); mc.audio = a;
-    a.preservesPitch = true; a.playbackRate = +$('mcSpeed').value;   // faster without the chipmunk pitch
+    a.preservesPitch = true; a.playbackRate = +$('mcSpeed').value; a.volume = Math.min(1, VOL.mc);   // faster without the chipmunk pitch
     duck(true); $('mcState').textContent = '🗣 ' + noTags(line.text).slice(0, 40);
     await new Promise((res, rej) => { a.onended = res; a.onerror = () => rej(new Error('không phát được')); a.play().catch(rej); });
     URL.revokeObjectURL(url); mc.audio = null;

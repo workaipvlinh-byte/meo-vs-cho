@@ -19,6 +19,7 @@ export function useGame() {
   const [status, setStatus] = useState<LiveStatus | null>(null);
   const [channelName, setChannelName] = useState(GAME.defaultChannelName);
   const prefs = useRef<Record<string, string>>({ ...GAME.mc });
+  const [mcPrefs, setMcPrefs] = useState<Record<string, string>>({ ...GAME.mc }); // để thanh kéo ở trang điều khiển hiện đúng mức server đang nhớ
   const [wishes] = useState(() => new WishLimiter(GAME.wishPerUserMs, GAME.wishGlobalMs));
 
   // Tên an toàn để hiện (tên có từ cấm thì dùng username) và tên đọc được cho MC
@@ -47,6 +48,7 @@ export function useGame() {
       if (c.action === 'setPrefs' && c.text) {
         try {
           prefs.current = { ...prefs.current, ...JSON.parse(c.text) };
+          setMcPrefs(prefs.current);
           gameApi()?.setMc(prefs.current);
         } catch {
           // bỏ qua JSON hỏng
@@ -90,7 +92,7 @@ export function useGame() {
     return () => clearInterval(t);
   }, []);
 
-  return { status, channelName };
+  return { status, channelName, mcPrefs };
 }
 
 export type GameState = ReturnType<typeof useGame>;

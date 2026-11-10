@@ -65,7 +65,7 @@ export default function App() {
             ) : null
           }
           top={<OpenStage />}
-          extra={<GameControls />}
+          extra={<GameControls prefs={game.mcPrefs} />}
           autoLive={AUTO}
         />
       </div>
