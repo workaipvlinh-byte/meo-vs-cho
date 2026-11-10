@@ -1399,7 +1399,7 @@ const SND = {
   power: ['ribhavagrawal-power-up-type-1-230548.mp3', 2.2, .55], coin: ['yodguard-coin-collect-3-540190.mp3', 1, .45],
   win: ['emand_edroff-victory-bell-success-fanfare-576275.mp3', 6, .6], heal: ['vadim_makes_sound-fantasy-healing-spell-cast-1-547831.mp3', 3, .5],
   clash1: ['kiem1.mp3', .8, .14], clash2: ['kiem2.mp3', .8, .14],
-  meo: ['meo.mp3', 2, .5], gau: ['gau.mp3', 2, .5],   // optional; missing -> synthesized cries below
+  meo: ['meo.mp3', 2, .5], gau: ['dog.mp3', 2, .5],   // optional; missing -> synthesized cries below
 };
 const OPTIONAL_SND = new Set(['meo', 'gau']);   // name: [file, max seconds (0 = loop), volume]
 let AC = null, sndOn = false, master = null, duckG = null, loops = {}, lastSfx = {};
@@ -1439,7 +1439,7 @@ async function soundOn(on) {
     sndOn = true; await loadSounds(); music(...musicState);
   } else { sndOn = false; for (const g of Object.values(loops)) g.gain.setTargetAtTime(0, AC.currentTime, .2); }
 }
-// ---- cartoon "meo meo" / "gâu gâu" over the music (synthesized; real meo.mp3 / gau.mp3 win if present) ----
+// ---- cartoon "meo meo" / "gâu gâu" over the music (synthesized; real meo.mp3 / dog.mp3 win if present) ----
 // They ride the music bus: follow the music volume knob and dip under the MC.
 function cry(t, loud) {
   if (!sndOn || VOL.music <= 0) return;
@@ -1447,8 +1447,10 @@ function cry(t, loud) {
   const name = t === ICE ? 'meo' : 'gau';
   if (BUF[name]) {   // real recording
     const src = AC.createBufferSource(), g = AC.createGain(), pn = AC.createStereoPanner(); src.buffer = BUF[name];
-    src.playbackRate.value = .92 + Math.random() * .16; g.gain.value = lvl * 2; pn.pan.value = pan;
-    src.connect(g).connect(pn).connect(duckG); src.start(); return;
+    src.playbackRate.value = .92 + Math.random() * .16; pn.pan.value = pan;
+    const t0 = AC.currentTime, len = Math.min(2.5, BUF[name].duration);   // long recordings: keep ~2.5s, fade out
+    g.gain.setValueAtTime(lvl * 1.6, t0); g.gain.setValueAtTime(lvl * 1.6, t0 + len - .4); g.gain.linearRampToValueAtTime(0, t0 + len);
+    src.connect(g).connect(pn).connect(duckG); src.start(t0, 0, len); return;
   }
   const t0 = AC.currentTime, out = AC.createGain(), pn = AC.createStereoPanner();
   pn.pan.value = pan; out.gain.value = lvl; out.connect(pn).connect(duckG);
