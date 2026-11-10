@@ -24,7 +24,7 @@ Màn hình dọc 1080×1920, chạy bằng PixiJS. Thử với khoảng 2.000 nh
 ## MC (giọng đọc)
 
 - **Dùng được ngay, không cần cài gì:** giọng **Nam Minh** (nam) và **Hoài My** (nữ) của Microsoft Edge. Mặc định là Nam Minh.
-- **Giọng VieNeu-TTS** (Adam bựa, Thiện Minh, Hải Đăng, Trúc Ly, Mai Anh): tự nhiên và có biểu cảm hơn (cười, hắng giọng, thở dài), nhưng phải cài [VieNeu-TTS](https://github.com/pnnbao97/VieNeu-TTS) và nên có card đồ họa. Chọn giọng VieNeu mà VieNeu chưa bật thì game tự đọc bằng Nam Minh, live không bị im.
+- **Giọng VieNeu-TTS** (Adam bựa, Thiện Minh, Hải Đăng, Trúc Ly, Mai Anh): tự nhiên và có biểu cảm hơn (cười, hắng giọng, thở dài), nhưng phải cài VieNeu-TTS (chạy server `apps.openai_speech` ở cổng 8000) và nên có card đồ họa. Chọn giọng VieNeu mà VieNeu chưa bật thì game tự đọc bằng Nam Minh, live không bị im.
 - Chọn giọng, tốc độ, độ biểu cảm, bật/tắt MC ở trang điều khiển. Server nhớ lựa chọn.
 - MC gom tên người mới vào, cảm ơn quà đúng tên, báo đổi hiệp, Vua Chuột, nhà sập.
 - Ít khách (5 người trở xuống): gọi tên người chơi, hỏi han cho họ comment. Đông (15 người trở lên): bình luận trận bằng số liệu thật mỗi khoảng 30 giây. Khoảng 75 giây rủ chia sẻ live một lần.
@@ -36,7 +36,7 @@ Nhạc nền, tiếng chiêu, tiếng va chạm, tiếng mèo kêu chó sủa. �
 
 ## Chạy
 
-1. Bấm đúp `BAT-LIVE.bat`. File tự bật VieNeu (nếu có ở `E:\02_AI\VieNeu-TTS`) và mở trang điều khiển.
+1. Cài Node.js (bản LTS). Bấm đúp `BAT-LIVE.bat`. Lần đầu tự cài thư viện mất 1–2 phút, xong thì tự mở trang điều khiển. Máy có VieNeu ở `E:\02_AI\VieNeu-TTS` thì file tự bật luôn; không có thì dùng giọng Nam Minh / Hoài My.
 2. Trang điều khiển: `http://localhost:3000`. Cổng bận thì dùng cổng kế tiếp, xem cửa sổ đen in ra.
 3. Trong TikTok LIVE Studio thêm nguồn Link `http://lvh.me:3000/?view=stage`, khổ 1080×1920.
 4. Gõ tên TikTok vào ô Kết nối.
