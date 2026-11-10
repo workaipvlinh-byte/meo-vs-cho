@@ -28,7 +28,7 @@ html.embed #panel { display: none; }
 /* ---------- on-stage UI (1080x1920 coordinates) ---------- */
 #ui { position: absolute; inset: 0; pointer-events: none; }
 .o { text-shadow: 0 3px 0 #000, 0 -2px 0 #000, 3px 0 0 #000, -3px 0 0 #000, 0 0 14px rgba(0,0,0,.8); }
-#hp { position: absolute; top: 270px; left: 36px; right: 36px; height: 92px; }
+#hp { position: absolute; top: 40px; left: 36px; right: 36px; height: 92px; }
 .hpbar { position: absolute; top: 20px; height: 52px; width: calc(50% - 98px); border: 4px solid var(--gold); background: rgba(0,0,0,.55); overflow: hidden; box-shadow: 0 0 0 3px #000, 0 6px 18px rgba(0,0,0,.6); }
 #hpIce { left: 0; border-radius: 26px 6px 6px 26px; }
 #hpFire { right: 0; border-radius: 6px 26px 26px 6px; }
@@ -43,14 +43,14 @@ html.embed #panel { display: none; }
 #clock.hurry { color: #ff5a3a; animation: pulse 1s infinite; }
 @keyframes pulse { 50% { transform: translateX(-50%) scale(1.08); } }
 
-#join { position: absolute; top: 432px; left: 0; right: 0; display: flex; justify-content: center; gap: 22px; }
+#join { position: absolute; top: 202px; left: 0; right: 0; display: flex; justify-content: center; gap: 22px; }
 .chip .go { font: 900 26px/1 var(--body); padding-left: 10px; }
 .chip { display: flex; align-items: center; gap: 10px; padding: 6px 22px 6px 8px; border-radius: 40px; border: 3px solid #000; font: 400 34px/1 var(--display); }
 .chip kbd { font: 400 34px/1 var(--display); width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; background: #000; color: #fff; padding-top: 4px; }
 .chip.ice { background: linear-gradient(180deg, #c8f3ff, #4cc3f7); color: #062440; }
 .chip.fire { background: linear-gradient(180deg, #ffe39a, #ff7d2a); color: #3a0d06; }
 
-.hb { position: absolute; top: 376px; height: 44px; width: calc(50% - 150px); border: 3px solid #000; border-radius: 22px; background: rgba(0,0,0,.6); overflow: hidden; }
+.hb { position: absolute; top: 146px; height: 44px; width: calc(50% - 150px); border: 3px solid #000; border-radius: 22px; background: rgba(0,0,0,.6); overflow: hidden; }
 #heartIce { left: 36px; } #heartFire { right: 36px; }
 .hb i { position: absolute; top: 0; bottom: 0; left: 0; transition: width .3s ease-out; }
 #heartIce i { background: linear-gradient(90deg, #1677c4, #7fe0ff); }
@@ -58,7 +58,7 @@ html.embed #panel { display: none; }
 .hb b { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font: 800 22px/1 var(--body); white-space: nowrap; }
 .hb.ready { animation: glow .6s infinite alternate; }
 @keyframes glow { to { box-shadow: 0 0 22px 4px #fff6; } }
-#phase { position: absolute; top: 372px; left: 50%; transform: translateX(-50%); width: 236px; text-align: center; font: 400 30px/1.05 var(--display); color: var(--gold); }
+#phase { position: absolute; top: 142px; left: 50%; transform: translateX(-50%); width: 236px; text-align: center; font: 400 30px/1.05 var(--display); color: var(--gold); }
 #phase small { display: block; font: 800 18px/1.2 var(--body); color: #fff; }
 
 #kills { position: absolute; top: 1470px; left: 0; right: 0; display: flex; justify-content: center; gap: 30px; font: 400 34px/1 var(--display); }
@@ -69,7 +69,7 @@ html.embed #panel { display: none; }
 .g small { display: block; font-weight: 800; font-size: 18px; color: #ffe7a8; }
 
 /* top 2 of each side sits right under the side chips: the first place a new viewer looks, never under TikTok's comment feed */
-.board { position: absolute; top: 500px; width: 330px; background: var(--panel); border: 3px solid var(--gold-dim); border-radius: 16px; padding: 4px 14px; font: 800 23px/1.35 var(--body); min-height: 40px; }
+.board { position: absolute; top: 276px; width: 360px; background: var(--panel); border: 3px solid var(--gold-dim); border-radius: 16px; padding: 4px 14px; font: 800 23px/1.35 var(--body); min-height: 40px; }
 #boardIce { left: 36px; border-color: #3a8fc0; }
 #boardFire { right: 36px; border-color: #c0602a; text-align: right; }
 .board div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -200,7 +200,7 @@ const VOICE = !EMBED || QS.get('mute') !== '1';
 // ================= CONFIG =================
 const C = {
   W: 1080, H: 1920,
-  FIELD: [575, 1460],          // battle band (y), starts under the top-2 boards
+  FIELD: [420, 1460],          // battle band (y), starts under the top-5 boards
   CASTLE_X: [150, 930],        // inner face of each castle
   MATCH_SEC: 1800,             // 30-minute match: 3 rounds + the last 10% is the final rush
   CASTLE_HP: 40000,            // shortcut: the 30-min sim (20-150 viewers) reached shields ~4 min early at 30k; re-tune after real lives
@@ -511,8 +511,8 @@ const cone = canvas(300, 160, g => { const r = g.createLinearGradient(0, 0, 300,
 const T = {
   iceGround: PIXI.Texture.from(canvas(C.W, C.H, paintIceGround)),
   fireGround: PIXI.Texture.from(canvas(C.W, C.H, paintFireGround)),
-  iceCastle: PIXI.Texture.from(canvas(230, 1040, paintIceCastle)),
-  fireCastle: PIXI.Texture.from(canvas(230, 1040, (g, w, h) => { g.translate(30, 0); paintFireCastle(g, w, h); })),
+  iceCastle: PIXI.Texture.from(canvas(230, 1110, paintIceCastle)),
+  fireCastle: PIXI.Texture.from(canvas(230, 1110, (g, w, h) => { g.translate(30, 0); paintFireCastle(g, w, h); })),
   dot: PIXI.Texture.from(dot), cone: PIXI.Texture.from(cone),
   rune: PIXI.Texture.from(paintRune()), beam: PIXI.Texture.from(paintBeam()), ring: PIXI.Texture.from(ringTex),
   rays: PIXI.Texture.from(raysTex), crack: PIXI.Texture.from(crackTex),
@@ -529,7 +529,7 @@ function repaint(tex, draw) { const c = tex.baseTexture.resource.source, g = c.g
 // draw img with its bottom-centre at (cx, by), height h; flip = mirror horizontally (pictures face right)
 function put(g, img, cx, by, h, flip) { const w = img.width * h / img.height; g.save(); g.translate(cx, by); if (flip) g.scale(-1, 1); g.drawImage(img, -w / 2, -h, w, h); g.restore(); }
 const ART = {};
-const HOUSES = [[245, 0], [480, 18], [715, 0], [950, 18]];   // bottom y in the castle canvas, nudge toward the field
+const HOUSES = [[220, 0], [510, 18], [800, 0], [1090, 18]];   // bottom y in the castle canvas, nudge toward the field
 // castle = 4 houses; `broken` of them (from the front-most) lie as dark rubble
 function paintHouses(t, broken) {
   const img = t === ICE ? ART.catH : ART.dogH; if (!img) return;
@@ -615,8 +615,8 @@ const tagLayer = new PIXI.Container();
 world.addChild(dim, groundFx, dragonLayer, fxLayer, tagLayer);
 // dark band behind TikTok header and bottom UI (outside the camera, never zooms)
 const shade = new PIXI.Graphics();
-shade.beginFill(0x000000, .55).drawRect(0, 0, C.W, 270).endFill();
-shade.beginFill(0x000000, .25).drawRect(0, 270, C.W, 300).endFill();
+shade.beginFill(0x000000, .4).drawRect(0, 0, C.W, 140).endFill();
+shade.beginFill(0x000000, .22).drawRect(0, 140, C.W, 270).endFill();
 shade.beginFill(0x000000, .35).drawRect(0, 1462, C.W, 458).endFill();
 app.stage.addChild(shade);
 // ambient flakes / embers
@@ -624,7 +624,7 @@ const ambient = [];
 for (let i = 0; i < 46; i++) {
   const s = new PIXI.Sprite(T.dot); s.anchor.set(.5); s.blendMode = PIXI.BLEND_MODES.ADD;
   const t = i % 2; s.tint = t ? 0xff8a2a : 0xd8f6ff; s.scale.set(rnd(.4, 1));
-  s.x = rnd(0, C.W); s.y = rnd(500, 1460); s.alpha = rnd(.3, .8);
+  s.x = rnd(0, C.W); s.y = rnd(420, 1460); s.alpha = rnd(.3, .8);
   ambient.push({ s, t, vy: t ? -rnd(.4, 1.1) : rnd(.4, 1.1), ph: rnd(0, 7) }); world.addChild(s);
 }
 
@@ -1299,7 +1299,7 @@ function animate(dt, f, now) {
     // flakes live on the ice side of the front, embers on the fire side
     const wrongSide = a.t ? a.s.x < front : a.s.x > front;
     a.s.visible = !wrongSide;
-    if (a.s.y > 1460) a.s.y = 500; if (a.s.y < 500) a.s.y = 1460;
+    if (a.s.y > 1460) a.s.y = 420; if (a.s.y < 420) a.s.y = 1460;
   }
   for (const t of [0, 1]) {
     const hitAgo = now * 1000 - (castle[t].hitAt || 0);
@@ -1342,13 +1342,16 @@ function renderUI(now) {
     hb.classList.toggle('ready', k > .8);
     const short = v => v >= 1000 ? (v / 1000).toLocaleString('vi-VN', { maximumFractionDigits: 1 }) + 'k' : String(Math.floor(v));
     hb.querySelector('b').textContent = `${comeback(t) ? '⚡' : '❤'} ${short(S.heart[t])}/${short(m)} ${SKILL[t][i]}${mult > 1 ? ` x${mult.toLocaleString('vi-VN')}` : ''}`;   // ⚡ = losing side, hearts count x1.3
-    // top 1 shows big with a crown (the side's "boss"); top 2 and 3 ride along small on one line
-    const top = [...S.players.values()].filter(p => p.side === t).sort((a, b) => b.pts - a.pts).slice(0, 3);
+    // top 1 shows big with a crown (the side's "boss"); top 2-5 ride along small, two per line
+    const top = [...S.players.values()].filter(p => p.side === t).sort((a, b) => b.pts - a.pts).slice(0, 5);
     const board = $(t ? 'boardFire' : 'boardIce'), rows = [];
     if (!top.length) { const d = document.createElement('div'); d.textContent = t ? 'Gõ 2 để vào phe Chó' : 'Gõ 1 để vào phe Mèo'; d.style.color = '#c9b8a8'; rows.push(d); }
     else {
       const d1 = document.createElement('div'); d1.className = 'r1'; d1.textContent = top[0].name; d1.style.color = TCOL[t]; rows.push(d1);
-      if (top.length > 1) { const d2 = document.createElement('div'); d2.className = 'r23'; d2.textContent = top.slice(1).map((p, i) => `${i + 2}. ${p.name}`).join('   '); rows.push(d2); }
+      for (let k = 1; k < top.length; k += 2) {   // 2-3 on one line, 4-5 on the next
+        const d = document.createElement('div'); d.className = 'r23';
+        d.textContent = top.slice(k, k + 2).map((p, i) => `${k + i + 1}. ${p.name}`).join('   '); rows.push(d);
+      }
     }
     board.replaceChildren(...rows);
   }
@@ -1561,7 +1564,7 @@ const noTags = t => t.replace(/\[[^\]]+\]\s*/g, '');
 // ---- MC voice for the standalone test: one line at a time, skips stale lines, never reads raw comments ----
 const spokenOf = new Map();   // display name -> name the host made readable (from _base speakableName)
 const speakName = n => spokenOf.get(n) || String(n).replace(/[^\p{L}\p{N} ]/gu, ' ').replace(/\s+/g, ' ').trim() || 'bạn';
-const mc = { q: [], busy: false, lastAt: 0, joins: [[], []], smallAt: 0, inviteAt: performance.now(), speaker: VOICE, audio: null };
+const mc = { q: [], busy: false, lastAt: 0, joins: [[], []], smallAt: 0, inviteAt: performance.now(), speaker: VOICE && !EMBED, audio: null };   // embedded: silent until the host confirms this stage may talk
 const PRIO = { dragon: 3, gift: 2, win: 3, round: 3, rat: 3, ratDown: 2, houseDown: 2, last30: 3, newMatch: 3 };
 function mcSay(text, prio) {
   mc.q.push({ text, prio, at: performance.now() });
@@ -1760,7 +1763,8 @@ if (!EMBED) {
 } else {
   setInterval(() => { fpsShown = fpsFrames; fpsFrames = 0; }, 1000);
   // stage inside LIVE Studio plays sound; the silent preview passes &mute=1. Browsers need one click before audio starts.
-  if (QS.get('mute') !== '1') { soundOn(true); addEventListener('pointerdown', () => { if (!AC || AC.state !== 'running') soundOn(true); }); }
+  // sound starts only when the host says this is THE speaking stage (setSpeaker); a click only unblocks audio on that page
+  if (QS.get('mute') !== '1') addEventListener('pointerdown', () => { if (mc.speaker && (!AC || AC.state !== 'running')) soundOn(true); });
 }
 
 // start once fonts are ready so name tags use the right typeface

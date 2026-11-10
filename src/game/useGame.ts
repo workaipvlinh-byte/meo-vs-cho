@@ -69,24 +69,24 @@ export function useGame() {
   });
 
   // Game tải xong thì nạp cài đặt MC; trên stage báo game có được nói không (server chỉ cho trang stage mở sau cùng nói)
+  // Game trong khung luôn im cho tới khi được báo "trang này được nói"; game tải lại thì báo lại từ đầu.
   useEffect(() => {
-    let ready = false;
+    let seen: unknown = null;
     let lastSpeaker: boolean | null = null;
     const t = setInterval(() => {
       const api = gameApi();
-      if (!api) {
-        ready = false;
-        return;
-      }
-      if (!ready) {
+      if (!api) return;
+      if (api !== seen) {
+        seen = api;
+        lastSpeaker = null;
         api.setMc(prefs.current);
-        ready = true;
       }
-      if (IS_STAGE && voice.enabled !== lastSpeaker) {
-        lastSpeaker = voice.enabled;
-        api.setSpeaker(voice.enabled);
+      const may = IS_STAGE && voice.enabled;
+      if (may !== lastSpeaker) {
+        lastSpeaker = may;
+        api.setSpeaker(may);
       }
-    }, 1000);
+    }, 500);
     return () => clearInterval(t);
   }, []);
 
