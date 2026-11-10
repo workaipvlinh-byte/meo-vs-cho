@@ -10,10 +10,12 @@ export const GAME = {
   title: 'Mèo vs Chó',
   defaultChannelName: 'kênh mình',
 
-  // MC mặc định (đổi ở trang điều khiển, server nhớ). Giọng của VieNeu-TTS; VieNeu chưa bật thì tự đọc bằng Edge.
+  // MC mặc định (đổi ở trang điều khiển, server nhớ).
   // Âm lượng: nhạc nền / tiếng hiệu ứng (0 tới 1.5) và giọng MC (0 tới 1). Nhạc nền mặc định một nửa cho MC rõ.
-  mc: { mcOn: '1', mcVoice: 'Adam bựa', mcSpeed: '1.15', mcExpr: '0.95', musicVol: '0.5', sfxVol: '1', mcVol: '1' } as Record<string, string>,
-  voices: ['Adam bựa', 'Thiện Minh', 'Hải Đăng', 'Trúc Ly', 'Mai Anh'],
+  mc: { mcOn: '1', mcVoice: 'Nam Minh', mcSpeed: '1.15', mcExpr: '0.95', musicVol: '0.5', sfxVol: '1', mcVol: '1' } as Record<string, string>,
+  // Nam Minh / Hoài My: giọng Microsoft Edge miễn phí, máy nào cũng dùng được, không cần cài gì.
+  // Các giọng còn lại của VieNeu-TTS (phải cài VieNeu). Chọn giọng VieNeu mà VieNeu chưa bật thì tự đọc Nam Minh.
+  voices: ['Nam Minh', 'Hoài My', 'Adam bựa', 'Thiện Minh', 'Hải Đăng', 'Trúc Ly', 'Mai Anh'],
 
   // Comment có lời cầu chúc -> đọc 1 câu chúc soạn sẵn. KHÔNG BAO GIỜ đọc nguyên văn comment.
   wishPerUserMs: 10 * 60_000,

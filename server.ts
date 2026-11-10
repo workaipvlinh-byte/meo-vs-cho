@@ -489,18 +489,20 @@ app.get('/api/tts', async (req, res) => {
         console.warn('VieNeu lỗi, đọc bằng Edge:', err instanceof Error ? err.message : err);
       }
     }
+    // thẻ cảm xúc [cười] [hắng giọng] chỉ VieNeu hiểu; Edge/Google thì bỏ đi kẻo đọc thành chữ
+    const said = text.replace(/\[[^\]]{1,20}\]\s*/g, '').trim() || text;
     const rate = Math.min(1.5, Math.max(0.5, Number(req.query.rate) || 1));
     const hype = req.query.hype === '1';
     // chỉ nhận 2 giọng này, không cho truyền tên giọng tuỳ ý
     const voiceName = req.query.v === 'f' ? TTS_VOICE_F : TTS_VOICE;
-    const key = `${voiceName}|${rate}|${hype}|${text}`;
+    const key = `${voiceName}|${rate}|${hype}|${said}`;
     let audio = ttsCache.get(key);
     if (!audio) {
       try {
-        audio = await edgeTts(text, rate, voiceName, hype);
+        audio = await edgeTts(said, rate, voiceName, hype);
       } catch (err) {
         console.warn('Edge TTS lỗi, chuyển Google:', err instanceof Error ? err.message : err);
-        audio = await googleTts(text);
+        audio = await googleTts(said);
       }
       ttsCache.set(key, audio);
       if (ttsCache.size > 200) ttsCache.delete(ttsCache.keys().next().value!);

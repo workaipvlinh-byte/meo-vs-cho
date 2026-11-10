@@ -21,11 +21,14 @@ Màn hình dọc 1080×1920, chạy bằng PixiJS. Thử với khoảng 2.000 nh
 - Con chúa rơi xuống có cận cảnh, chậm hình, mặt đất nứt, hào quang. Chiêu có ánh sáng và rung màn hình.
 - Comment, tim, quà gửi lúc đang hiện màn kết quả vẫn được giữ lại, sang trận mới tính đủ.
 
-## MC
+## MC (giọng đọc)
 
-- Đọc bằng giọng VieNeu-TTS ("Adam bựa") chạy trên máy. Không có VieNeu thì tự chuyển sang giọng Edge.
-- Lúc ít khách thì gọi tên người chơi, hỏi han cho họ comment. Lúc đông thì bình luận trận bằng số liệu thật. Thỉnh thoảng rủ chia sẻ live.
-- Không bao giờ đọc nguyên văn comment, không xin quà. Tên bậy được thay bằng tên tài khoản.
+- **Dùng được ngay, không cần cài gì:** giọng **Nam Minh** (nam) và **Hoài My** (nữ) của Microsoft Edge. Mặc định là Nam Minh.
+- **Giọng VieNeu-TTS** (Adam bựa, Thiện Minh, Hải Đăng, Trúc Ly, Mai Anh): tự nhiên và có biểu cảm hơn (cười, hắng giọng, thở dài), nhưng phải cài [VieNeu-TTS](https://github.com/pnnbao97/VieNeu-TTS) và nên có card đồ họa. Chọn giọng VieNeu mà VieNeu chưa bật thì game tự đọc bằng Nam Minh, live không bị im.
+- Chọn giọng, tốc độ, độ biểu cảm, bật/tắt MC ở trang điều khiển. Server nhớ lựa chọn.
+- MC gom tên người mới vào, cảm ơn quà đúng tên, báo đổi hiệp, Vua Chuột, nhà sập.
+- Ít khách (5 người trở xuống): gọi tên người chơi, hỏi han cho họ comment. Đông (15 người trở lên): bình luận trận bằng số liệu thật mỗi khoảng 30 giây. Khoảng 75 giây rủ chia sẻ live một lần.
+- Không bao giờ đọc nguyên văn comment, không xin quà. Tên bậy được thay bằng tên tài khoản. Mỗi lúc chỉ 1 câu, câu chờ quá 20 giây thì bỏ, chỉ 1 trang game được phát tiếng.
 
 ## Âm thanh
 

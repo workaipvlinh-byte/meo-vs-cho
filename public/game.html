@@ -180,7 +180,7 @@ html.embed #panel { display: none; }
     <section><h2>Âm thanh</h2><div class="row"><button id="snd" aria-pressed="false">🔇 Bật âm thanh</button> (nhạc nền + tiếng chiêu, file trong sound/)</div></section>
     <section><h2>Đo</h2><div id="stats"></div></section>
     <section><h2>MC đọc (VieNeu, cần bật âm thanh và chạy node dev-server.mjs)</h2>
-      <div class="row" style="margin-bottom:6px"><label><input type="checkbox" id="mcOn" checked> MC đọc thành tiếng</label> giọng: <select id="mcVoice"><option>Adam bựa</option></select> <span id="mcState" style="color:#c9b8d8"></span></div>
+      <div class="row" style="margin-bottom:6px"><label><input type="checkbox" id="mcOn" checked> MC đọc thành tiếng</label> giọng: <select id="mcVoice"><option>Adam bựa</option><option>Nam Minh</option><option>Hoài My</option></select> <span id="mcState" style="color:#c9b8d8"></span></div>
       <div class="row" style="margin-bottom:6px">tốc độ <input type="range" id="mcSpeed" min="0.9" max="1.5" step="0.05" value="1.15"> <b id="mcSpeedV">1.15x</b>
         · biểu cảm <input type="range" id="mcExpr" min="0.6" max="1.3" step="0.05" value="0.95"> <b id="mcExprV">0.95</b>
         <button id="mcTest">▶ Nghe thử</button></div>
@@ -1619,6 +1619,7 @@ function takeOf(type, data) {
   lastTake[type] = i; return list[i];
 }
 const noTags = t => t.replace(/\[[^\]]+\]\s*/g, '');
+const EDGE_VOICES = { 'Nam Minh': 'm', 'Hoài My': 'f' };   // free Microsoft voices, no install needed
 // ---- MC voice for the standalone test: one line at a time, skips stale lines, never reads raw comments ----
 const spokenOf = new Map();   // display name -> name the host made readable (from _base speakableName)
 const speakName = n => spokenOf.get(n) || String(n).replace(/[^\p{L}\p{N} ]/gu, ' ').replace(/\s+/g, ' ').trim() || 'bạn';
@@ -1638,7 +1639,9 @@ async function mcNext() {
   try {
     if (!sndOn) throw new Error('âm thanh đang tắt');
     $('mcState').textContent = '⏳ đang tạo giọng';
-    const q = new URLSearchParams({ eng: 'vn', voice: $('mcVoice').value, temp: $('mcExpr').value, text: line.text });
+    // Edge voices (Nam Minh / Hoài My) work on any machine; others are VieNeu voices (server falls back to Edge if VieNeu is off)
+    const v = $('mcVoice').value, edge = EDGE_VOICES[v];
+    const q = new URLSearchParams(edge ? { v: edge, text: noTags(line.text) } : { eng: 'vn', voice: v, temp: $('mcExpr').value, text: line.text });
     const r = await fetch('/api/tts?' + q);
     if (!r.ok) throw new Error('giọng đọc lỗi ' + r.status);
     const url = URL.createObjectURL(await r.blob()), a = new Audio(url); mc.audio = a;
@@ -1716,7 +1719,7 @@ if (!EMBED) {
   document.querySelectorAll('[data-len]').forEach(b => b.onclick = () => { matchLen = +b.dataset.len; sel('data-len', b); newMatch(); });
   // jump the clock to a round (1 = round 2, 1.5 = rat, 2 = round 3, 3 = final rush)
   document.querySelectorAll('[data-jump]').forEach(b => b.onclick = () => { const j = +b.dataset.jump; S.time = matchLen * (1 - (j === 3 ? 1 - C.FINAL_FRAC : j === 1.5 ? C.RAT_AT : j / 3)) - .5; });
-  fetch('/api/voices').then(r => r.json()).then(d => { const sel = $('mcVoice'); for (const v of d.data || []) if (v.id !== 'Adam bựa') sel.add(new Option(`${v.name} (${v.gender === 'female' ? 'nữ' : 'nam'})`, v.id)); }).catch(() => {});
+  fetch('/api/voices').then(r => r.json()).then(d => { const sel = $('mcVoice'); for (const v of d.data || []) if (v.id !== 'Adam bựa' && ![...sel.options].some(x => x.value === v.id)) sel.add(new Option(`${v.name} (${v.gender === 'female' ? 'nữ' : 'nam'})`, v.id)); }).catch(() => {});
   $('mcOn').onchange = () => mcNext();
   $('mcSpeed').oninput = () => { $('mcSpeedV').textContent = (+$('mcSpeed').value).toFixed(2) + 'x'; };
   $('mcExpr').oninput = () => { $('mcExprV').textContent = (+$('mcExpr').value).toFixed(2); };   // higher = livelier but less stable

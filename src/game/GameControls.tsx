@@ -185,7 +185,7 @@ export function GameControls({ prefs }: { prefs: Record<string, string> }) {
         <Vol label="🗣 Giọng MC" value={mc.mcVol} max={1} onChange={(v) => saveMc({ mcVol: v })} />
       </Row>
 
-      <Row title="MC (giọng VieNeu, cần bật E:\02_AI\VieNeu-TTS; chưa bật thì tự đọc giọng Edge)">
+      <Row title="MC: Nam Minh / Hoài My dùng được ngay; Adam bựa và các giọng khác cần cài VieNeu-TTS (chưa bật thì tự đọc Nam Minh)">
         <B onClick={() => saveMc({ mcOn: mc.mcOn === '0' ? '1' : '0' })} on={mc.mcOn !== '0'}>
           {mc.mcOn === '0' ? '🔇 MC đang tắt' : '🗣 MC đang bật'}
         </B>
