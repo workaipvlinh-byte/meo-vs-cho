@@ -64,11 +64,29 @@ export default function App() {
               </StageFrame>
             ) : null
           }
+          top={<OpenStage />}
           extra={<GameControls />}
           autoLive={AUTO}
         />
       </div>
     </>
+  );
+}
+
+// Mở tab chỉ có màn hình game (đúng trang đưa vào LIVE Studio): tự co vừa cửa sổ theo tỉ lệ 1080x1920, có tiếng + MC.
+function OpenStage() {
+  return (
+    <section className="space-y-2 rounded-2xl bg-slate-900 p-4 ring-1 ring-slate-800">
+      <button
+        onClick={() => window.open('/?view=stage', 'meo-vs-cho-stage')}
+        className="w-full rounded-xl bg-amber-500 px-4 py-3 text-base font-bold text-slate-950 hover:bg-amber-400"
+      >
+        🖥 Mở tab chỉ có game (1080×1920, có tiếng + MC)
+      </button>
+      <p className="text-xs text-slate-400">
+        Tab này giống hệt trang trong TikTok LIVE Studio. Chỉ trang game mở sau cùng được nói, nên nếu LIVE Studio đang mở game thì đừng mở thêm tab này (sẽ cướp giọng).
+      </p>
+    </section>
   );
 }
 
