@@ -1,0 +1,1768 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mèo vs Chó</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lalezar&family=Be+Vietnam+Pro:wght@500;700;800;900&display=swap">
+<style>
+:root {
+  --ice: #5fd0ff; --ice-deep: #0a2a4a; --ice-pale: #e6fbff;
+  --fire: #ff7a2a; --fire-deep: #3a0d06; --fire-pale: #ffe3a3;
+  --gold: #f2c14e; --gold-dim: #a8822e;
+  --ink: #fff7ea; --panel: rgba(12, 10, 20, .62);
+  --display: "Lalezar", "Be Vietnam Pro", system-ui, sans-serif;
+  --body: "Be Vietnam Pro", system-ui, sans-serif;
+  color-scheme: dark;
+}
+html, body { margin: 0; background: #07060c; color: var(--ink); font-family: var(--body); }
+* { box-sizing: border-box; }
+
+/* ---------- standalone test layout: stage left, test panel right ---------- */
+.wrap { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px; padding: 12px; height: 100vh; }
+#box { height: calc(100vh - 24px); aspect-ratio: 9 / 16; position: relative; overflow: hidden; border-radius: 12px; border: 1px solid #3a2a40; background: #000; }
+html.embed .wrap { display: block; padding: 0; }
+html.embed #box { height: 100vh; width: 100vw; aspect-ratio: auto; border: 0; border-radius: 0; }
+html.embed #panel { display: none; }
+#stage { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; transform-origin: 0 0; overflow: hidden; }
+#stage canvas { position: absolute; inset: 0; }
+
+/* ---------- on-stage UI (1080x1920 coordinates) ---------- */
+#ui { position: absolute; inset: 0; pointer-events: none; }
+.o { text-shadow: 0 3px 0 #000, 0 -2px 0 #000, 3px 0 0 #000, -3px 0 0 #000, 0 0 14px rgba(0,0,0,.8); }
+#hp { position: absolute; top: 270px; left: 36px; right: 36px; height: 92px; }
+.hpbar { position: absolute; top: 20px; height: 52px; width: calc(50% - 98px); border: 4px solid var(--gold); background: rgba(0,0,0,.55); overflow: hidden; box-shadow: 0 0 0 3px #000, 0 6px 18px rgba(0,0,0,.6); }
+#hpIce { left: 0; border-radius: 26px 6px 6px 26px; }
+#hpFire { right: 0; border-radius: 6px 26px 26px 6px; }
+.hpbar i { position: absolute; top: 0; bottom: 0; transition: width .35s ease-out; }
+#hpIce i { right: 0; background: linear-gradient(180deg, #bff0ff, #3fb8f5 45%, #1677c4); }
+#hpFire i { left: 0; background: linear-gradient(180deg, #ffe7a0, #ff8a2a 45%, #c8320f); }
+.hpbar b { position: absolute; inset: 0; display: flex; align-items: center; padding: 0 22px; font: 400 40px/1 var(--display); letter-spacing: .5px; }
+#hpFire b { justify-content: flex-end; }
+.hpbar.hit { animation: hit .3s; }
+@keyframes hit { 30% { transform: translateX(-6px); filter: brightness(1.8); } 60% { transform: translateX(6px); } }
+#clock { position: absolute; left: 50%; top: 0; transform: translateX(-50%); width: 176px; height: 92px; border-radius: 20px; background: radial-gradient(circle at 50% 30%, #3b2a12, #120c05); border: 4px solid var(--gold); box-shadow: 0 0 0 3px #000; display: grid; place-items: center; font: 400 50px/1 var(--display); }
+#clock.hurry { color: #ff5a3a; animation: pulse 1s infinite; }
+@keyframes pulse { 50% { transform: translateX(-50%) scale(1.08); } }
+
+#join { position: absolute; top: 432px; left: 0; right: 0; display: flex; justify-content: center; gap: 22px; }
+.chip .go { font: 900 26px/1 var(--body); padding-left: 10px; }
+.chip { display: flex; align-items: center; gap: 10px; padding: 6px 22px 6px 8px; border-radius: 40px; border: 3px solid #000; font: 400 34px/1 var(--display); }
+.chip kbd { font: 400 34px/1 var(--display); width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; background: #000; color: #fff; padding-top: 4px; }
+.chip.ice { background: linear-gradient(180deg, #c8f3ff, #4cc3f7); color: #062440; }
+.chip.fire { background: linear-gradient(180deg, #ffe39a, #ff7d2a); color: #3a0d06; }
+
+.hb { position: absolute; top: 376px; height: 44px; width: calc(50% - 150px); border: 3px solid #000; border-radius: 22px; background: rgba(0,0,0,.6); overflow: hidden; }
+#heartIce { left: 36px; } #heartFire { right: 36px; }
+.hb i { position: absolute; top: 0; bottom: 0; left: 0; transition: width .3s ease-out; }
+#heartIce i { background: linear-gradient(90deg, #1677c4, #7fe0ff); }
+#heartFire i { background: linear-gradient(90deg, #c8320f, #ffb347); }
+.hb b { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font: 800 22px/1 var(--body); white-space: nowrap; }
+.hb.ready { animation: glow .6s infinite alternate; }
+@keyframes glow { to { box-shadow: 0 0 22px 4px #fff6; } }
+#phase { position: absolute; top: 372px; left: 50%; transform: translateX(-50%); width: 236px; text-align: center; font: 400 30px/1.05 var(--display); color: var(--gold); }
+#phase small { display: block; font: 800 18px/1.2 var(--body); color: #fff; }
+
+#kills { position: absolute; top: 1470px; left: 0; right: 0; display: flex; justify-content: center; gap: 30px; font: 400 34px/1 var(--display); }
+
+#gifts { position: absolute; top: 1506px; left: 24px; right: 100px; display: flex; gap: 8px; }
+.g { flex: 1; display: flex; align-items: center; gap: 8px; background: var(--panel); border: 3px solid var(--gold); border-radius: 16px; padding: 8px 12px; font: 900 23px/1.15 var(--body); }
+.g em { font-style: normal; font-size: 42px; }
+.g small { display: block; font-weight: 800; font-size: 18px; color: #ffe7a8; }
+
+/* top 2 of each side sits right under the side chips: the first place a new viewer looks, never under TikTok's comment feed */
+.board { position: absolute; top: 500px; width: 330px; background: var(--panel); border: 3px solid var(--gold-dim); border-radius: 16px; padding: 4px 14px; font: 800 23px/1.35 var(--body); min-height: 40px; }
+#boardIce { left: 36px; border-color: #3a8fc0; }
+#boardFire { right: 36px; border-color: #c0602a; text-align: right; }
+.board div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.board .r1 { font-size: 28px; }
+.board .r1::before { content: "👑 "; }
+.board .r23 { font: 700 18px/1.35 var(--body); color: #f3e6cf; }
+
+#announce { position: absolute; top: 880px; left: 0; right: 0; display: flex; justify-content: center; }
+#announce div { padding: 14px 48px 6px; font: 400 78px/1.05 var(--display); color: #fff; border-top: 5px solid #000; border-bottom: 5px solid #000; transform: scaleX(0); transition: transform .28s cubic-bezier(.3,1.5,.5,1); text-align: center; max-width: 1040px; white-space: nowrap; }
+#announce div.on { transform: scaleX(1); }
+
+#giftBanner { position: absolute; top: 1250px; left: 50%; transform: translate(-50%, -30px); opacity: 0; transition: transform .3s, opacity .3s; background: linear-gradient(180deg, rgba(40,28,6,.92), rgba(16,10,2,.92)); border: 4px solid var(--gold); border-radius: 22px; padding: 14px 30px; text-align: center; min-width: 560px; box-shadow: 0 0 40px rgba(242,193,78,.45); }
+#giftBanner.on { opacity: 1; transform: translate(-50%, 0); }
+#giftBanner .n { font: 900 40px/1.15 var(--body); color: var(--gold); }
+#giftBanner .e { font: 400 44px/1.1 var(--display); white-space: nowrap; }
+
+#result { position: absolute; inset: 0; display: grid; place-items: center; background: radial-gradient(circle, rgba(0,0,0,.35), rgba(0,0,0,.8)); opacity: 0; transition: opacity .5s; }
+#result.on { opacity: 1; }
+#result .w { font: 400 150px/1 var(--display); text-align: center; }
+#result .m { font: 800 40px/1.4 var(--body); text-align: center; margin-top: 18px; }
+#result .s { font: 700 30px/1 var(--body); text-align: center; margin-top: 30px; opacity: .8; }
+
+#tapsnd { display: none; }
+
+/* ---------- test panel ---------- */
+#panel { overflow: auto; display: grid; gap: 12px; align-content: start; font-size: 14px; }
+#panel h1 { margin: 0; font: 400 34px/1 var(--display); color: var(--gold); }
+#panel section { background: #15111c; border: 1px solid #3a2a40; border-radius: 10px; padding: 10px 12px; }
+#panel h2 { margin: 0 0 8px; font-size: 13px; color: #c9b8d8; font-weight: 700; }
+#panel .row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+#panel button { font: inherit; color: var(--ink); background: #261d30; border: 1px solid #4a3858; border-radius: 8px; padding: 7px 10px; cursor: pointer; }
+#panel button:hover { border-color: var(--gold); }
+#panel button.on { background: var(--gold); color: #1a1205; }
+#panel button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+#stats { font-variant-numeric: tabular-nums; line-height: 1.6; }
+#mclog { height: 160px; overflow: auto; font-size: 13px; line-height: 1.5; color: #e9dcc8; }
+@media (max-width: 900px) { .wrap { grid-template-columns: 1fr; height: auto; } #box { height: 80vh; margin: 0 auto; } }
+@media (prefers-reduced-motion: reduce) { .hb.ready, .hpbar.hit, #clock.hurry { animation: none; } }
+</style>
+
+<div class="wrap">
+  <div id="box">
+    <div id="stage">
+      <div id="ui">
+        <div id="hp">
+          <div class="hpbar" id="hpIce"><i></i><b class="o">❄ 0</b></div>
+          <div id="clock" class="o">30:00</div>
+          <div class="hpbar" id="hpFire"><i></i><b class="o">0 🔥</b></div>
+        </div>
+        <div id="join">
+          <div class="chip ice"><span class="go">Gõ</span><kbd>1</kbd>Phe Mèo</div>
+          <div class="chip fire"><span class="go">Gõ</span><kbd>2</kbd>Phe Chó</div>
+        </div>
+        <div class="hb" id="heartIce"><i></i><b class="o"></b></div>
+        <div id="phase" class="o">HIỆP 1<small>Khởi động</small></div>
+        <div class="hb" id="heartFire"><i></i><b class="o"></b></div>
+        <div id="kills" class="o"></div>
+        <div id="gifts">
+          <div class="g"><em>🌹</em><span>Thêm lính<small>1–19 xu</small></span></div>
+          <div class="g"><em>🐟</em><span>Chiêu 1<small>20 xu · 5k ❤</small></span></div>
+          <div class="g"><em>⚡</em><span>Chiêu 2<small>50 xu · 15k ❤</small></span></div>
+          <div class="g"><em>👑</em><span>Con chúa<small>100 xu · 50k ❤</small></span></div>
+        </div>
+        <div class="board o" id="boardIce"></div>
+        <div class="board o" id="boardFire"></div>
+        <div id="giftBanner"><div class="n o"></div><div class="e o"></div></div>
+        <div id="announce"><div class="o"></div></div>
+        <div id="result"><div><div class="w o"></div><div class="m o"></div><div class="s o"></div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="panel">
+    <h1>Mèo vs Chó · bản thử</h1>
+    <section>
+      <h2>Người xem (tên ngẫu nhiên)</h2>
+      <div class="row">
+        <button data-act="c1">Gõ "1"</button><button data-act="c2">Gõ "2"</button>
+        <button data-act="chat">Comment thường</button><button data-act="like">❤️ 30 tim</button><button data-act="h1k0">+1k tim Mèo</button><button data-act="h1k1">+1k tim Chó</button><button data-act="share">↗ Chia sẻ</button>
+      </div>
+    </section>
+    <section>
+      <h2>Quà (tặng cho phe đang chọn)</h2>
+      <div class="row">
+        <button data-side="0" class="on">Phe Mèo</button><button data-side="1">Phe Chó</button> |
+        <button data-gift="1">🌹 1 xu</button><button data-gift="10">10 xu</button><button data-gift="20">🐟 20 xu</button><button data-gift="50">⚡ 50 xu</button><button data-gift="100">👑 100 xu</button><button data-gift="199">199 xu</button>
+        <button data-gift="1" data-n="10">🌹 combo x10</button>
+      </div>
+    </section>
+    <section>
+      <h2>Live tự động (người ảo vào rải rác, comment, tim, quà)</h2>
+      <div class="row">
+        <button data-auto="0" class="on">Tắt</button><button data-auto="1">1 người</button><button data-auto="10">10</button><button data-auto="60">60</button><button data-auto="200">200</button><button data-auto="500">500</button>
+        | lệch phe: <button data-bias="0.5" class="on">50/50</button><button data-bias="0.7">70/30</button>
+      </div>
+      <div class="row" style="margin-top:6px">
+        <button id="sim30">▶ Mô phỏng trọn trận 30 phút</button> (người vào từ từ, có 3 đợt dồn dập, có người rời đi)
+        <button id="simLow">▶ Mô phỏng live ít khách</button> (cả trận chỉ vài người)
+        | tốc độ: <button data-speed="1" class="on">x1</button><button data-speed="5">x5</button>
+      </div>
+      <div id="simInfo" style="margin-top:6px;color:#f2c14e"></div>
+    </section>
+    <section>
+      <h2>Trận</h2>
+      <div class="row"><button id="newMatch">Trận mới</button><button data-len="1800" class="on">30 phút</button><button data-len="300">5 phút (thử)</button><button data-len="90">90 giây (thử)</button></div>
+      <div class="row" style="margin-top:6px">Nhảy tới: <button data-jump="1">Hiệp 2</button><button data-jump="1.5">Vua Chuột</button><button data-jump="2">Hiệp 3</button><button data-jump="3">3 phút cuối</button></div>
+    </section>
+    <section><h2>Âm thanh</h2><div class="row"><button id="snd" aria-pressed="false">🔇 Bật âm thanh</button> (nhạc nền + tiếng chiêu, file trong sound/)</div></section>
+    <section><h2>Đo</h2><div id="stats"></div></section>
+    <section><h2>MC đọc (VieNeu, cần bật âm thanh và chạy node dev-server.mjs)</h2>
+      <div class="row" style="margin-bottom:6px"><label><input type="checkbox" id="mcOn" checked> MC đọc thành tiếng</label> giọng: <select id="mcVoice"><option>Adam bựa</option></select> <span id="mcState" style="color:#c9b8d8"></span></div>
+      <div class="row" style="margin-bottom:6px">tốc độ <input type="range" id="mcSpeed" min="0.9" max="1.5" step="0.05" value="1.15"> <b id="mcSpeedV">1.15x</b>
+        · biểu cảm <input type="range" id="mcExpr" min="0.6" max="1.3" step="0.05" value="0.95"> <b id="mcExprV">0.95</b>
+        <button id="mcTest">▶ Nghe thử</button></div>
+      <div id="mclog"></div></section>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.4.2/pixi.min.js"></script>
+<script>
+'use strict';
+const QS = new URLSearchParams(location.search);
+const EMBED = QS.get('embed') === '1';
+if (EMBED) document.documentElement.classList.add('embed');
+// who talks: the standalone test page, or the stage inside LIVE Studio. The silent preview (&mute=1) never does.
+const VOICE = !EMBED || QS.get('mute') !== '1';
+
+// ================= CONFIG =================
+const C = {
+  W: 1080, H: 1920,
+  FIELD: [575, 1460],          // battle band (y), starts under the top-2 boards
+  CASTLE_X: [150, 930],        // inner face of each castle
+  MATCH_SEC: 1800,             // 30-minute match: 3 rounds + the last 10% is the final rush
+  CASTLE_HP: 40000,            // shortcut: the 30-min sim (20-150 viewers) reached shields ~4 min early at 30k; re-tune after real lives
+  FLOOR: [.75, .5, .25, 0],    // castle can't drop below this share of HP in round 1 / 2 / 3 / final: a KO only happens in the last 3 minutes
+  HEART_MS: [5000, 15000, 50000],   // owner's heart milestones: skill 1 / skill 2 / boss, then the bar restarts
+  PHASE_MULT: [1, 1, 1.5, 2],  // hearts count x this per round (shown on screen)
+  COMEBACK: 1.3,               // losing side's hearts count x1.3 (shown as PHẢN CÔNG)
+  FINAL_FRAC: .1,              // final rush = last 10% (3 min of 30)
+  GIFT_HEARTS_PER_COIN: 10,    // a gift also pushes the heart bar a little
+  RAT_AT: .5, RAT_HP: 700, RAT_SEC: 75, BUFF_SEC: 60,
+  UNIT_CASTLE_DMG: 2,
+  MAX_UNITS_PER_TEAM: 1200,    // shortcut: tuned for a mid-range PC, re-check fps on the streaming PC
+  SQUAD: 5,                    // units per comment
+  USER_COOLDOWN_MS: 1500,      // one squad per person per 1.5s (the comment itself always counts)
+  SWITCH_GAP_MS: 20000,        // a player can change side at most every 20s
+  LIKES_PER_UNIT: 3, MAX_UNITS_PER_LIKE: 15,
+  MAX_DRAGONS_PER_TEAM: 3,
+  MAX_GIFT_EFFECTS: 5,         // a combo gift fires at most this many effects
+  BOT_MIN_UNITS: 40,           // empty screen guard: bots top up a side below this
+  NAME_TAGS_PER_TEAM: 5,
+  LOSS_PER_UNIT: .08,          // castle HP lost per own unit killed
+  BAD: ['địt','đụ','lồn','cặc','buồi','đéo','dmm','đmm','vcl','clm','óc chó'],
+};
+const ICE = 0, FIRE = 1;
+const TEAM = ['Mèo', 'Chó'];
+const TCOL = ['#7fe0ff', '#ffb347'];
+const DIR = [1, -1];
+const SKILL = [['Mưa cá khô', 'Cào băng', 'Mèo chúa'], ['Mưa xương', 'Sủa chấn động', 'Chó chúa']];
+const PHASES = [['HIỆP 1', 'Khởi động'], ['HIỆP 2', 'Tăng tốc'], ['HIỆP 3', 'Quyết chiến'], ['3 PHÚT CUỐI', 'Tim x2']];
+
+// ================= pure helpers (self-checked) =================
+const lower = s => String(s).toLowerCase();
+function parseSide(text) {
+  const t = lower(text).normalize('NFKC').trim();   // NFKC turns full-width "１" into "1"
+  const m = t.match(/^(1+|2+)(?!\d)/);              // "1", "1111", "1 nha", "2❤️"; "12" or "21" stay unknown
+  if (m) return m[1][0] === '1' ? ICE : FIRE;
+  if (t.includes('mèo') || t === 'meo' || t.includes('băng')) return ICE;
+  if (t.includes('chó') || t === 'cho' || t.includes('lửa')) return FIRE;
+  return null;
+}
+const isBad = s => { const t = lower(s); return C.BAD.some(w => t.includes(w)); };
+// gift price -> 0 +20 units, 1 +60 units, 2 skill 1, 3 skill 2, 4 boss, 5 boss + skill 2
+function giftTier(coin) { return coin >= 199 ? 5 : coin >= 100 ? 4 : coin >= 50 ? 3 : coin >= 20 ? 2 : coin >= 10 ? 1 : 0; }
+// add hearts to a bar; returns the new bar value and which skills (0,1,2) fired. Bar restarts after the boss.
+function heartStep(before, add) {
+  const M = C.HEART_MS, fired = [];
+  let b = before, v = before + add;
+  for (let guard = 0; guard < 4; guard++) {
+    M.forEach((m, i) => { if (b < m && v >= m) fired.push(i); });
+    if (v < M[2]) break;
+    v -= M[2]; b = 0;
+  }
+  return { v, fired };
+}
+// round index from elapsed share of the match: 0,1,2 thirds, 3 = final rush
+const phaseOf = (frac) => frac >= 1 - C.FINAL_FRAC ? 3 : frac >= 2 / 3 ? 2 : frac >= 1 / 3 ? 1 : 0;
+console.assert(parseSide('1') === 0 && parseSide(' 2 ') === 1 && parseSide('1111') === 0 && parseSide('2222') === 1 && parseSide('1 nha') === 0 && parseSide('2❤️') === 1 && parseSide('１') === 0
+  && parseSide('Mèo ơi') === 0 && parseSide('chó') === 1 && parseSide('12') === null && parseSide('21') === null && parseSide('hi') === null && parseSide('100') === null, 'parseSide');
+console.assert(giftTier(1) === 0 && giftTier(10) === 1 && giftTier(19) === 1 && giftTier(20) === 2 && giftTier(50) === 3 && giftTier(99) === 3 && giftTier(100) === 4 && giftTier(199) === 5, 'giftTier');
+console.assert(heartStep(4999, 1).fired.join() === '0' && heartStep(0, 4999).fired.length === 0 && heartStep(14000, 40000).v === 4000 && heartStep(14000, 40000).fired.join() === '1,2' && heartStep(0, 60000).fired.join() === '0,1,2,0', 'heartStep');
+console.assert(phaseOf(0) === 0 && phaseOf(.34) === 1 && phaseOf(.7) === 2 && phaseOf(.95) === 3, 'phaseOf');
+console.assert(isBad('ĐMM thằng') && !isBad('hay quá'), 'isBad');
+
+// ================= PIXI =================
+const app = new PIXI.Application({ width: C.W, height: C.H, backgroundColor: 0x000000, antialias: true });
+document.getElementById('stage').prepend(app.view);
+app.ticker.maxFPS = 60;
+const world = new PIXI.Container();
+app.stage.addChild(world);
+
+function fit() {
+  const box = document.getElementById('box');
+  const k = Math.min(box.clientWidth / C.W, box.clientHeight / C.H);
+  const st = document.getElementById('stage');
+  st.style.transform = `translate(${(box.clientWidth - C.W * k) / 2}px, ${(box.clientHeight - C.H * k) / 2}px) scale(${k})`;
+}
+addEventListener('resize', fit); fit();
+
+// ---------- canvas painters ----------
+function canvas(w, h, draw) { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); return c; }
+const rnd = (a, b) => a + Math.random() * (b - a);
+let seed = 7; const srnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647; // stable art
+
+function paintIceGround(g, w, h) {
+  const gr = g.createLinearGradient(0, 0, 0, h);
+  gr.addColorStop(0, '#04101f'); gr.addColorStop(.3, '#0b2c4d'); gr.addColorStop(.7, '#123f63'); gr.addColorStop(1, '#071a30');
+  g.fillStyle = gr; g.fillRect(0, 0, w, h);
+  // frozen plates
+  g.strokeStyle = 'rgba(200,240,255,.13)'; g.lineWidth = 3;
+  for (let i = 0; i < 70; i++) {
+    let x = srnd() * w, y = C.FIELD[0] + srnd() * (C.FIELD[1] - C.FIELD[0]);
+    g.beginPath(); g.moveTo(x, y);
+    for (let k = 0; k < 4; k++) { x += (srnd() - .5) * 160; y += (srnd() - .5) * 90; g.lineTo(x, y); }
+    g.stroke();
+  }
+  for (let i = 0; i < 900; i++) { g.fillStyle = `rgba(220,248,255,${srnd() * .25})`; g.fillRect(srnd() * w, srnd() * h, 2, 2); }
+  // snow mounds along edges of the field
+  g.fillStyle = 'rgba(210,240,255,.18)';
+  for (let i = 0; i < 14; i++) { g.beginPath(); g.ellipse(srnd() * w, C.FIELD[0] - 10 + (i % 2) * (C.FIELD[1] - C.FIELD[0] + 20), 120, 26, 0, 0, 7); g.fill(); }
+}
+function paintFireGround(g, w, h) {
+  const gr = g.createLinearGradient(0, 0, 0, h);
+  gr.addColorStop(0, '#120302'); gr.addColorStop(.3, '#3a0e06'); gr.addColorStop(.7, '#4a1508'); gr.addColorStop(1, '#170403');
+  g.fillStyle = gr; g.fillRect(0, 0, w, h);
+  g.shadowColor = '#ff6a1a'; g.shadowBlur = 18; g.strokeStyle = 'rgba(255,120,40,.55)'; g.lineWidth = 4;
+  for (let i = 0; i < 55; i++) {
+    let x = srnd() * w, y = C.FIELD[0] + srnd() * (C.FIELD[1] - C.FIELD[0]);
+    g.beginPath(); g.moveTo(x, y);
+    for (let k = 0; k < 4; k++) { x += (srnd() - .5) * 150; y += (srnd() - .5) * 80; g.lineTo(x, y); }
+    g.stroke();
+  }
+  g.shadowBlur = 0;
+  for (let i = 0; i < 700; i++) { g.fillStyle = `rgba(255,${120 + srnd() * 100 | 0},40,${srnd() * .3})`; g.fillRect(srnd() * w, srnd() * h, 2, 2); }
+  g.fillStyle = 'rgba(20,4,2,.5)';
+  for (let i = 0; i < 14; i++) { g.beginPath(); g.ellipse(srnd() * w, C.FIELD[0] - 10 + (i % 2) * (C.FIELD[1] - C.FIELD[0] + 20), 120, 26, 0, 0, 7); g.fill(); }
+}
+function paintIceCastle(g, w, h) {
+  const shard = (x, y, cw, ch, lit) => {
+    const gr = g.createLinearGradient(x - cw, 0, x + cw, 0);
+    gr.addColorStop(0, '#2a86c4'); gr.addColorStop(.5, lit ? '#f2fdff' : '#bfefff'); gr.addColorStop(1, '#4bb3e8');
+    g.fillStyle = gr; g.strokeStyle = '#04223c'; g.lineWidth = 5;
+    g.beginPath(); g.moveTo(x, y - ch); g.lineTo(x + cw, y - ch * .72); g.lineTo(x + cw * .8, y); g.lineTo(x - cw * .8, y); g.lineTo(x - cw, y - ch * .72); g.closePath(); g.fill(); g.stroke();
+    g.strokeStyle = 'rgba(255,255,255,.6)'; g.lineWidth = 3; g.beginPath(); g.moveTo(x, y - ch + 10); g.lineTo(x - cw * .35, y - 10); g.stroke();
+  };
+  for (const [x, y, cw, ch, l] of [[40, 300, 40, 260], [110, 330, 34, 200], [70, 520, 46, 300, 1], [130, 560, 30, 170], [40, 740, 38, 230], [115, 790, 36, 210, 1]]) shard(x, y, cw, ch, l);
+}
+function paintFireCastle(g, w, h) {
+  g.fillStyle = '#1c0a06'; g.strokeStyle = '#000'; g.lineWidth = 6;
+  const rock = (x, y, rw, rh) => { g.beginPath(); g.moveTo(x - rw, y); g.lineTo(x - rw * .55, y - rh); g.lineTo(x + rw * .55, y - rh * .92); g.lineTo(x + rw, y); g.closePath(); g.fill(); g.stroke(); };
+  rock(100, 330, 90, 280); rock(70, 560, 70, 230); rock(110, 800, 95, 300);
+  g.shadowColor = '#ff5a00'; g.shadowBlur = 24; g.strokeStyle = '#ff8a2a'; g.lineWidth = 6;
+  for (const [x, y] of [[100, 60], [70, 340], [110, 510]]) { g.beginPath(); g.moveTo(x, y); g.lineTo(x - 18, y + 90); g.lineTo(x + 10, y + 170); g.stroke(); }
+  g.fillStyle = '#ffb347'; for (const [x, y] of [[100, 50], [70, 330], [110, 500]]) { g.beginPath(); g.ellipse(x, y, 30, 12, 0, 0, 7); g.fill(); }
+}
+// unit atlas per team: [walker, captain]
+function paintUnits(t) {
+  return canvas(120, 64, (g) => {
+    const draw = (ox, s, cap) => {
+      g.save(); g.translate(ox, 34); g.scale(s, s);
+      g.lineWidth = 3; g.strokeStyle = '#000';
+      const d = DIR[t];
+      if (t === ICE) { // cat: white-blue fur, pointy ears, ice-blue scarf
+        g.fillStyle = '#dff4ff';
+        g.beginPath(); g.moveTo(-d * 9, 12); g.quadraticCurveTo(-d * 17, 6, -d * 15, -6); g.lineWidth = 4; g.strokeStyle = '#000'; g.stroke(); // tail outline
+        g.lineWidth = 2.4; g.strokeStyle = '#dff4ff'; g.stroke(); g.lineWidth = 3; g.strokeStyle = '#000';
+        g.beginPath(); g.ellipse(0, 12, 9, 7, 0, 0, 7); g.fill(); g.stroke(); // body
+        for (const sx of [-1, 1]) { g.beginPath(); g.moveTo(sx * 3, -9); g.lineTo(sx * 10, -17); g.lineTo(sx * 10, -4); g.closePath(); g.fill(); g.stroke(); } // ears
+        g.beginPath(); g.arc(0, 0, 10.5, 0, 7); g.fill(); g.stroke(); // head
+        g.fillStyle = '#ffb3c8'; for (const sx of [-1, 1]) { g.beginPath(); g.moveTo(sx * 5, -9); g.lineTo(sx * 8.5, -13.5); g.lineTo(sx * 8.5, -7); g.fill(); } // inner ears
+        g.fillStyle = '#2fa8f0'; g.beginPath(); g.rect(-8, 8, 16, 4); g.fill(); g.stroke(); // scarf
+        g.strokeStyle = '#4a6a80'; g.lineWidth = 1; for (const sx of [-1, 1]) for (const yy of [2, 5]) { g.beginPath(); g.moveTo(sx * 6, yy); g.lineTo(sx * 14, yy - 1 + (yy - 3)); g.stroke(); } // whiskers
+        g.strokeStyle = '#000'; g.lineWidth = 3;
+        g.fillStyle = '#ff7aa0'; g.beginPath(); g.moveTo(d * 1.5 - 1.5, 3); g.lineTo(d * 1.5 + 1.5, 3); g.lineTo(d * 1.5, 4.8); g.fill(); // nose
+        g.fillStyle = '#3fd0ff'; g.beginPath(); g.ellipse(-4 + d, -1, 2.6, 3.2, 0, 0, 7); g.ellipse(4 + d, -1, 2.6, 3.2, 0, 0, 7); g.fill(); // eyes
+        g.fillStyle = '#000'; g.beginPath(); g.ellipse(-4 + d * 1.6, -1, 1, 2.6, 0, 0, 7); g.ellipse(4 + d * 1.6, -1, 1, 2.6, 0, 0, 7); g.fill();
+      } else { // dog: orange-brown fur, floppy ears, red bandana
+        g.fillStyle = '#e8873a';
+        g.beginPath(); g.moveTo(-d * 8, 10); g.quadraticCurveTo(-d * 17, 4, -d * 15, -3); g.lineWidth = 4; g.stroke();
+        g.lineWidth = 2.4; g.strokeStyle = '#e8873a'; g.stroke(); g.lineWidth = 3; g.strokeStyle = '#000'; // wagging tail
+        g.beginPath(); g.ellipse(0, 12, 9.5, 7, 0, 0, 7); g.fill(); g.stroke(); // body
+        g.beginPath(); g.arc(0, 0, 10.5, 0, 7); g.fill(); g.stroke(); // head
+        g.fillStyle = '#7a3a12'; for (const sx of [-1, 1]) { g.beginPath(); g.ellipse(sx * 10, 0, 4, 8, sx * .35, 0, 7); g.fill(); g.stroke(); } // floppy ears
+        g.fillStyle = '#ffe2b8'; g.beginPath(); g.ellipse(d * 2.5, 4, 6, 4.5, 0, 0, 7); g.fill(); // muzzle
+        g.fillStyle = '#e8321e'; g.beginPath(); g.moveTo(-8, 8); g.lineTo(8, 8); g.lineTo(0, 15); g.closePath(); g.fill(); g.stroke(); // bandana
+        g.fillStyle = '#1a0a04'; g.beginPath(); g.ellipse(d * 3.5, 2.4, 2.4, 1.8, 0, 0, 7); g.fill(); // nose
+        g.fillStyle = '#ff6f8a'; g.beginPath(); g.ellipse(d * 3, 7.5, 1.8, 2.2, 0, 0, 7); g.fill(); // tongue
+        g.fillStyle = '#fff'; g.beginPath(); g.arc(-4 + d, -3, 2.8, 0, 7); g.arc(4 + d, -3, 2.8, 0, 7); g.fill();
+        g.fillStyle = '#000'; g.beginPath(); g.arc(-4 + d * 1.8, -3, 1.7, 0, 7); g.arc(4 + d * 1.8, -3, 1.7, 0, 7); g.fill();
+      }
+      if (cap) { // banner pole
+        g.strokeStyle = '#000'; g.lineWidth = 2; g.beginPath(); g.moveTo(-12, 10); g.lineTo(-12, -26); g.stroke();
+        g.fillStyle = t === ICE ? '#bff0ff' : '#ffcf5a'; g.beginPath(); g.moveTo(-12, -26); g.lineTo(4, -21); g.lineTo(-12, -15); g.fill(); g.stroke();
+      }
+      g.restore();
+    };
+    draw(18, .8, false);   // frame 0 at x 0..40
+    draw(80, 1.15, true); // frame 1 at x 40..120
+  });
+}
+// giant cat (ice) / giant dog (fire), drawn facing right, mirrored for fire. Canvas 340x240, origin at body centre (150,140)
+function paintDragonBody(t) {
+  return canvas(340, 240, (g) => {
+    const cat = t === ICE;
+    const P = cat
+      ? { hi: '#ffffff', mid: '#d4efff', lo: '#6fa3c9', dark: '#2d5d82', eye: '#5fe0ff', inner: '#ffb3c8', armor: '#2fa8f0' }
+      : { hi: '#ffe0b0', mid: '#e8873a', lo: '#9a4614', dark: '#5a240a', eye: '#ffd23a', inner: '#ff8f6b', armor: '#e8321e' };
+    if (!cat) { g.translate(340, 0); g.scale(-1, 1); }
+    g.translate(150, 140);
+    g.lineJoin = 'round'; g.lineCap = 'round';
+    const fur = (y0, y1) => { const gr = g.createLinearGradient(0, y0, 0, y1); gr.addColorStop(0, P.hi); gr.addColorStop(.5, P.mid); gr.addColorStop(1, P.lo); return gr; };
+    const ink = w => { g.strokeStyle = '#05070c'; g.lineWidth = w; };
+    // tail: cat = long S-curve up, dog = short fluffy wag
+    ink(26); g.beginPath();
+    if (cat) { g.moveTo(-50, 10); g.bezierCurveTo(-120, 10, -100, -70, -135, -95); } else { g.moveTo(-50, 0); g.quadraticCurveTo(-95, -10, -100, -60); }
+    g.stroke(); g.strokeStyle = fur(-90, 20); g.lineWidth = 16; g.stroke();
+    if (cat) { g.fillStyle = P.dark; g.beginPath(); g.arc(-135, -95, 9, 0, 7); g.fill(); }
+    // back legs
+    ink(6); g.fillStyle = fur(20, 70);
+    for (const lx of [-42, -14]) { g.beginPath(); g.ellipse(lx, 44, 17, 26, 0, 0, 7); g.fill(); g.stroke(); }
+    // body
+    g.fillStyle = fur(-40, 60); ink(7);
+    g.beginPath(); g.ellipse(0, 12, 70, 44, -.05, 0, 7); g.fill(); g.stroke();
+    // stripes (cat) / patch (dog)
+    if (cat) { g.strokeStyle = P.lo; g.lineWidth = 6; for (const x of [-40, -20, 0]) { g.beginPath(); g.moveTo(x, -28); g.quadraticCurveTo(x + 6, -14, x, 0); g.stroke(); } }
+    else { g.fillStyle = P.dark; g.beginPath(); g.ellipse(-26, -6, 24, 16, .3, 0, 7); g.fill(); }
+    // chest armour plate
+    g.fillStyle = P.armor; ink(5);
+    g.beginPath(); g.moveTo(30, -20); g.quadraticCurveTo(70, -14, 68, 30); g.quadraticCurveTo(46, 44, 28, 30); g.closePath(); g.fill(); g.stroke();
+    g.fillStyle = '#f2c14e'; g.beginPath(); g.arc(50, 10, 7, 0, 7); g.fill(); g.stroke();
+    // front legs + paws
+    g.fillStyle = fur(10, 70); ink(6);
+    for (const lx of [22, 50]) { g.beginPath(); g.moveTo(lx - 11, 24); g.lineTo(lx - 9, 62); g.lineTo(lx + 11, 62); g.lineTo(lx + 11, 24); g.closePath(); g.fill(); g.stroke();
+      g.beginPath(); g.ellipse(lx + 2, 64, 15, 9, 0, 0, 7); g.fill(); g.stroke(); }
+    g.fillStyle = '#fff'; for (const lx of [22, 50]) for (const c of [-6, 2, 10]) { g.beginPath(); g.moveTo(lx + c, 68); g.lineTo(lx + c + 3, 76); g.lineTo(lx + c + 6, 68); g.fill(); } // claws
+    // cat ears behind head
+    ink(6);
+    if (cat) for (const ex of [70, 126]) { g.fillStyle = fur(-150, -90); g.beginPath(); g.moveTo(ex - 20, -96); g.lineTo(ex, -146); g.lineTo(ex + 20, -96); g.closePath(); g.fill(); g.stroke();
+      g.fillStyle = P.inner; g.beginPath(); g.moveTo(ex - 10, -100); g.lineTo(ex, -130); g.lineTo(ex + 10, -100); g.fill(); }
+    // head
+    g.fillStyle = fur(-115, -10); ink(7);
+    g.beginPath(); g.arc(98, -62, 50, 0, 7); g.fill(); g.stroke();
+    if (!cat) for (const [ex, rot] of [[58, .5], [128, -.25]]) { g.fillStyle = P.dark; g.beginPath(); g.ellipse(ex, -58, 15, 34, rot, 0, 7); g.fill(); g.stroke(); } // floppy ears
+    // muzzle + open roaring mouth (mouth ~ (140,-40): breath starts there)
+    g.fillStyle = cat ? '#ffffff' : '#ffe2b8'; ink(5);
+    g.beginPath(); g.ellipse(cat ? 124 : 132, -44, cat ? 24 : 32, cat ? 18 : 20, 0, 0, 7); g.fill(); g.stroke();
+    g.fillStyle = '#3a0710'; g.beginPath(); g.moveTo(118, -38); g.quadraticCurveTo(142, -36, 156, -42); g.quadraticCurveTo(146, -18, 124, -24); g.closePath(); g.fill(); g.stroke();
+    g.fillStyle = '#fff'; for (const tx of [124, 144]) { g.beginPath(); g.moveTo(tx, -39); g.lineTo(tx + 3, -30); g.lineTo(tx + 6, -39); g.fill(); } // fangs
+    g.fillStyle = cat ? '#ff7aa0' : '#1a0a04'; g.beginPath(); g.ellipse(cat ? 140 : 160, -54, cat ? 6 : 9, cat ? 4 : 6, 0, 0, 7); g.fill(); // nose
+    if (cat) { g.strokeStyle = 'rgba(5,7,12,.7)'; g.lineWidth = 2; for (const [y, dy] of [[-48, -8], [-42, 0], [-36, 8]]) { g.beginPath(); g.moveTo(140, y); g.lineTo(178, y + dy); g.stroke(); } }
+    // fierce glowing eyes with brows
+    g.shadowColor = P.eye; g.shadowBlur = 18; g.fillStyle = P.eye;
+    for (const ex of [82, 118]) { g.beginPath(); g.ellipse(ex, -74, 10, cat ? 9 : 8, 0, 0, 7); g.fill(); }
+    g.shadowBlur = 0; g.fillStyle = '#05070c';
+    for (const ex of [82, 118]) { g.beginPath(); if (cat) g.ellipse(ex + 3, -74, 2.6, 8, 0, 0, 7); else g.arc(ex + 3, -74, 4.5, 0, 7); g.fill(); }
+    g.fillStyle = '#fff'; for (const ex of [82, 118]) { g.beginPath(); g.arc(ex - 2, -78, 2.4, 0, 7); g.fill(); }
+    ink(5); for (const [ex, s] of [[82, 1], [118, -1]]) { g.beginPath(); g.moveTo(ex - 12, -88 - s * 3); g.lineTo(ex + 12, -88 + s * 3); g.stroke(); }
+    // crown
+    g.fillStyle = '#f2c14e'; ink(5);
+    g.beginPath(); g.moveTo(74, -104); g.lineTo(72, -132); g.lineTo(86, -118); g.lineTo(98, -140); g.lineTo(110, -118); g.lineTo(124, -132); g.lineTo(122, -104); g.closePath(); g.fill(); g.stroke();
+    g.fillStyle = P.eye; g.beginPath(); g.arc(98, -114, 5, 0, 7); g.fill();
+  });
+}
+// flowing cape (texture still called "wing"); root at (14,156)
+function paintWing(t) {
+  return canvas(220, 170, (g) => {
+    const [c1, c2, trim] = t === ICE ? ['#5cc4ff', '#123f6e', '#eafcff'] : ['#ff6a3a', '#6a0d06', '#f2c14e'];
+    const gr = g.createLinearGradient(0, 0, 220, 0); gr.addColorStop(0, c1); gr.addColorStop(1, c2);
+    g.lineJoin = 'round'; g.fillStyle = gr; g.strokeStyle = '#05070c'; g.lineWidth = 6;
+    g.beginPath(); g.moveTo(10, 140); g.quadraticCurveTo(100, 96, 212, 110);
+    g.quadraticCurveTo(196, 124, 206, 138); g.quadraticCurveTo(180, 140, 184, 156); g.quadraticCurveTo(150, 150, 140, 164); g.quadraticCurveTo(80, 160, 14, 166);
+    g.closePath(); g.fill(); g.stroke();
+    g.strokeStyle = trim; g.lineWidth = 5; g.beginPath(); g.moveTo(18, 136); g.quadraticCurveTo(100, 100, 206, 112); g.stroke();
+  });
+}
+// magic circle (white, tinted per team at runtime)
+function paintRune() {
+  return canvas(420, 420, (g) => {
+    g.translate(210, 210); g.strokeStyle = '#fff'; g.fillStyle = '#fff';
+    g.shadowColor = '#fff'; g.shadowBlur = 14;
+    g.lineWidth = 7; g.beginPath(); g.arc(0, 0, 196, 0, 7); g.stroke();
+    g.lineWidth = 3; g.beginPath(); g.arc(0, 0, 176, 0, 7); g.stroke();
+    g.beginPath(); g.arc(0, 0, 110, 0, 7); g.stroke();
+    for (let i = 0; i < 24; i++) { // rune ticks between the outer rings
+      const a = i / 24 * Math.PI * 2; g.save(); g.rotate(a); g.fillRect(-2, -192, 4, i % 2 ? 10 : 16);
+      if (i % 3 === 0) { g.beginPath(); g.arc(0, -150, 7, 0, 7); g.fill(); }
+      g.restore();
+    }
+    g.lineWidth = 4; // hexagram
+    for (const off of [0, Math.PI / 3]) { g.beginPath(); for (let i = 0; i <= 3; i++) { const a = off + i * 2 * Math.PI / 3 - Math.PI / 2; g[i ? 'lineTo' : 'moveTo'](Math.cos(a) * 176, Math.sin(a) * 176); } g.stroke(); }
+    g.beginPath(); g.arc(0, 0, 26, 0, 7); g.fill();
+  });
+}
+function paintBeam() {
+  return canvas(160, 900, (g) => {
+    const v = g.createLinearGradient(0, 900, 0, 0); v.addColorStop(0, 'rgba(255,255,255,1)'); v.addColorStop(.7, 'rgba(255,255,255,.5)'); v.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = v; g.fillRect(0, 0, 160, 900);
+    g.globalCompositeOperation = 'destination-in';
+    const h = g.createLinearGradient(0, 0, 160, 0); h.addColorStop(0, 'rgba(0,0,0,0)'); h.addColorStop(.5, 'rgba(0,0,0,1)'); h.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = h; g.fillRect(0, 0, 160, 900);
+  });
+}
+const raysTex = canvas(512, 512, g => {   // halo: 14 soft light rays + glow core
+  g.translate(256, 256);
+  for (let i = 0; i < 14; i++) {
+    g.save(); g.rotate(i / 14 * Math.PI * 2);
+    const gr = g.createLinearGradient(0, 0, 0, -250); gr.addColorStop(0, 'rgba(255,255,255,.9)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = gr; const w = i % 2 ? 10 : 18; g.beginPath(); g.moveTo(-w, 0); g.lineTo(0, -250); g.lineTo(w, 0); g.fill(); g.restore();
+  }
+  const core = g.createRadialGradient(0, 0, 0, 0, 0, 130); core.addColorStop(0, 'rgba(255,255,255,.8)'); core.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = core; g.beginPath(); g.arc(0, 0, 130, 0, 7); g.fill();
+});
+const crackTex = canvas(400, 400, g => {   // landing crater: dark ring + cracks, laid flat on the ground
+  g.translate(200, 200);
+  const c = g.createRadialGradient(0, 0, 10, 0, 0, 110); c.addColorStop(0, 'rgba(0,0,0,.65)'); c.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = c; g.beginPath(); g.arc(0, 0, 110, 0, 7); g.fill();
+  g.strokeStyle = 'rgba(10,6,4,.85)'; g.lineCap = 'round';
+  for (let i = 0; i < 11; i++) {
+    let a = i / 11 * 6.28 + rnd(-.2, .2), r = 30, x = Math.cos(a) * r, y = Math.sin(a) * r;
+    g.lineWidth = 7; g.beginPath(); g.moveTo(x, y);
+    for (let k = 0; k < 4; k++) { r += rnd(30, 45); a += rnd(-.25, .25); x = Math.cos(a) * r; y = Math.sin(a) * r; g.lineTo(x, y); g.lineWidth = Math.max(2, g.lineWidth - 1.5); }
+    g.stroke();
+  }
+});
+const ringTex = canvas(256, 256, g => { g.strokeStyle = '#fff'; g.lineWidth = 14; g.shadowColor = '#fff'; g.shadowBlur = 20; g.beginPath(); g.arc(128, 128, 100, 0, 7); g.stroke(); });
+const dot = canvas(16, 16, g => { const r = g.createRadialGradient(8, 8, 0, 8, 8, 8); r.addColorStop(0, '#fff'); r.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = r; g.fillRect(0, 0, 16, 16); });
+const cone = canvas(300, 160, g => { const r = g.createLinearGradient(0, 0, 300, 0); r.addColorStop(0, 'rgba(255,255,255,.95)'); r.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = r; g.beginPath(); g.moveTo(0, 80); g.lineTo(300, 0); g.lineTo(300, 160); g.fill(); });
+
+const T = {
+  iceGround: PIXI.Texture.from(canvas(C.W, C.H, paintIceGround)),
+  fireGround: PIXI.Texture.from(canvas(C.W, C.H, paintFireGround)),
+  iceCastle: PIXI.Texture.from(canvas(230, 1040, paintIceCastle)),
+  fireCastle: PIXI.Texture.from(canvas(230, 1040, (g, w, h) => { g.translate(30, 0); paintFireCastle(g, w, h); })),
+  dot: PIXI.Texture.from(dot), cone: PIXI.Texture.from(cone),
+  rune: PIXI.Texture.from(paintRune()), beam: PIXI.Texture.from(paintBeam()), ring: PIXI.Texture.from(ringTex),
+  rays: PIXI.Texture.from(raysTex), crack: PIXI.Texture.from(crackTex),
+  unit: [0, 1].map(t => { const b = PIXI.BaseTexture.from(paintUnits(t)); return [new PIXI.Texture(b, new PIXI.Rectangle(0, 0, 40, 64)), new PIXI.Texture(b, new PIXI.Rectangle(40, 0, 80, 64))]; }),
+  dragon: [0, 1].map(t => PIXI.Texture.from(paintDragonBody(t))),
+  wing: [0, 1].map(t => PIXI.Texture.from(paintWing(t))),
+};
+
+// ---------- owner's art (img/game, cut by Claude from the Gemini images) ----------
+// The code-drawn art above stays as a fallback; once a picture loads it is painted over the same canvas.
+let useArt = false;
+function loadImg(n) { return new Promise(r => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = `img/game/${n}.png`; }); }
+function repaint(tex, draw) { const c = tex.baseTexture.resource.source, g = c.getContext('2d'); g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, c.width, c.height); draw(g, c.width, c.height); tex.baseTexture.update(); }
+// draw img with its bottom-centre at (cx, by), height h; flip = mirror horizontally (pictures face right)
+function put(g, img, cx, by, h, flip) { const w = img.width * h / img.height; g.save(); g.translate(cx, by); if (flip) g.scale(-1, 1); g.drawImage(img, -w / 2, -h, w, h); g.restore(); }
+const ART = {};
+const HOUSES = [[245, 0], [480, 18], [715, 0], [950, 18]];   // bottom y in the castle canvas, nudge toward the field
+// castle = 4 houses; `broken` of them (from the front-most) lie as dark rubble
+function paintHouses(t, broken) {
+  const img = t === ICE ? ART.catH : ART.dogH; if (!img) return;
+  repaint(t === ICE ? T.iceCastle : T.fireCastle, (g, w) => {
+    const order = [1, 2, 0, 3];   // middle houses fall first, the outer ones last
+    HOUSES.forEach(([y, dx], i) => {
+      const down = order.indexOf(i) < broken;
+      const s = .74, hh = img.height * (200 * s) / img.width, cx = t === ICE ? 104 + dx : w - 104 - dx;
+      g.fillStyle = 'rgba(0,0,0,.35)'; g.beginPath(); g.ellipse(cx, y - 4, 100 * s, 16 * s, 0, 0, 7); g.fill();
+      if (!down) { put(g, img, cx, y, hh, t === FIRE); return; }
+      g.save(); g.globalAlpha = .55; g.filter = 'grayscale(.8) brightness(.45)';
+      g.translate(cx, y); g.rotate(t === ICE ? -.35 : .35); g.scale(1, .45); put(g, img, 0, 0, hh, t === FIRE); g.restore();
+    });
+  });
+}
+Promise.all(['cat', 'dog', 'cat_king', 'dog_king', 'cat_house', 'dog_house', 'rat_king'].map(loadImg)).then(([cat, dog, catK, dogK, catH, dogH, rat]) => {
+  if (!(cat && dog && catK && dogK && catH && dogH)) return console.warn('art missing, keeping drawn art');
+  useArt = true; Object.assign(ART, { catH, dogH, rat });
+  const flip = t => t === FIRE;   // dogs fight from the right, so they look left
+  [cat, dog].forEach((img, t) => repaint(T.unit[t][0], g => {
+    // tabby cats and yellow dogs share colours, so each side gets a baked team-colour halo
+    g.shadowColor = t === ICE ? '#3fd0ff' : '#ff5a1a'; g.shadowBlur = 3;
+    put(g, img, 20, 60, 36, flip(t)); put(g, img, 80, 61, 46, flip(t));   // walker 0..40, captain 40..120 (80% of the old size: wider map)
+    g.shadowBlur = 0;
+    const px = flip(t) ? 102 : 58;
+    g.strokeStyle = '#000'; g.lineWidth = 2.5; g.beginPath(); g.moveTo(px, 54); g.lineTo(px, 8); g.stroke();
+    g.fillStyle = t === ICE ? '#3fb8f5' : '#ff5a24'; g.beginPath(); g.moveTo(px, 8); g.lineTo(px + (flip(t) ? -16 : 16), 13); g.lineTo(px, 19); g.closePath(); g.fill(); g.stroke();
+  }));
+  [catK, dogK].forEach((img, t) => repaint(T.dragon[t], g => put(g, img, t === ICE ? 150 : 190, 238, 236, flip(t))));
+  if (rat) repaint(T.rat, g => put(g, rat, 170, 238, 236, false));
+  for (const t of [0, 1]) paintHouses(t, S ? S.broken[t] : 0);
+});
+
+// skill props: falling fish / bone, the claw sweep and the bark wave
+T.fish = PIXI.Texture.from(canvas(60, 30, g => {
+  g.lineWidth = 3; g.strokeStyle = '#05070c'; g.fillStyle = '#bfe6f5';
+  g.beginPath(); g.ellipse(26, 15, 20, 10, 0, 0, 7); g.fill(); g.stroke();
+  g.fillStyle = '#8fc4dc'; g.beginPath(); g.moveTo(44, 15); g.lineTo(57, 4); g.lineTo(57, 26); g.closePath(); g.fill(); g.stroke();
+  g.fillStyle = '#05070c'; g.beginPath(); g.arc(14, 12, 2.5, 0, 7); g.fill();
+}));
+T.bone = PIXI.Texture.from(canvas(60, 30, g => {
+  g.lineWidth = 3; g.strokeStyle = '#05070c'; g.fillStyle = '#fff6e6';
+  for (const x of [10, 50]) for (const y of [9, 21]) { g.beginPath(); g.arc(x, y, 7, 0, 7); g.fill(); g.stroke(); }
+  g.fillRect(10, 9, 40, 12); g.beginPath(); g.moveTo(10, 9); g.lineTo(50, 9); g.moveTo(10, 21); g.lineTo(50, 21); g.stroke();
+}));
+T.claw = PIXI.Texture.from(canvas(160, 1000, g => {   // three icy claw marks, top to bottom
+  g.shadowColor = '#bff4ff'; g.shadowBlur = 20; g.lineCap = 'round';
+  for (const [x, w] of [[40, 14], [80, 18], [120, 14]]) {
+    const gr = g.createLinearGradient(0, 0, 0, 1000); gr.addColorStop(0, 'rgba(255,255,255,0)'); gr.addColorStop(.5, '#ffffff'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+    g.strokeStyle = gr; g.lineWidth = w; g.beginPath(); g.moveTo(x - 30, 20); g.quadraticCurveTo(x + 20, 500, x - 30, 980); g.stroke();
+  }
+}));
+T.bark = PIXI.Texture.from(canvas(160, 1000, g => {   // bark shock: stacked arcs
+  g.shadowColor = '#fff'; g.shadowBlur = 16; g.strokeStyle = '#fff'; g.lineCap = 'round';
+  for (const [x, w] of [[30, 6], [70, 12], [115, 20]]) { g.lineWidth = w; g.beginPath(); g.ellipse(x - 120, 500, 220, 480, 0, -.9, .9); g.stroke(); }
+}));
+T.rat = PIXI.Texture.from(canvas(340, 240, g => {   // fallback rat if the picture is missing
+  g.translate(170, 150); g.lineWidth = 6; g.strokeStyle = '#05070c'; g.fillStyle = '#8a8590';
+  g.beginPath(); g.ellipse(0, 20, 80, 60, 0, 0, 7); g.fill(); g.stroke();
+  g.beginPath(); g.arc(0, -60, 50, 0, 7); g.fill(); g.stroke();
+  g.fillStyle = '#f2a0a8'; for (const x of [-45, 45]) { g.beginPath(); g.arc(x, -100, 26, 0, 7); g.fill(); g.stroke(); }
+}));
+
+// ---------- scene layers ----------
+const iceBg = new PIXI.Sprite(T.iceGround);
+const fireBg = new PIXI.Sprite(T.fireGround);
+const fireMask = new PIXI.Graphics();
+fireBg.mask = fireMask;
+const seam = new PIXI.Graphics(); seam.blendMode = PIXI.BLEND_MODES.ADD;
+const steam = new PIXI.Container();
+world.addChild(iceBg, fireBg, fireMask, seam, steam);
+const castle = [new PIXI.Sprite(T.iceCastle), new PIXI.Sprite(T.fireCastle)];
+castle[0].position.set(0, C.FIELD[0] - 70); castle[1].position.set(C.W - 230, C.FIELD[0] - 70);
+world.addChild(...castle);
+const unitLayer = [new PIXI.ParticleContainer(C.MAX_UNITS_PER_TEAM + 50, { position: true }), new PIXI.ParticleContainer(C.MAX_UNITS_PER_TEAM + 50, { position: true })];
+world.addChild(unitLayer[0], unitLayer[1]);
+// close-up dim: darkens the crowd so the summon reads on its own
+const dim = new PIXI.Graphics().beginFill(0x000000).drawRect(-C.W, -C.H, C.W * 3, C.H * 3).endFill(); dim.alpha = 0;
+const groundFx = new PIXI.Container();   // magic circles under the dragon
+const fxLayer = new PIXI.Container();
+const dragonLayer = new PIXI.Container();
+const tagLayer = new PIXI.Container();
+world.addChild(dim, groundFx, dragonLayer, fxLayer, tagLayer);
+// dark band behind TikTok header and bottom UI (outside the camera, never zooms)
+const shade = new PIXI.Graphics();
+shade.beginFill(0x000000, .55).drawRect(0, 0, C.W, 270).endFill();
+shade.beginFill(0x000000, .25).drawRect(0, 270, C.W, 300).endFill();
+shade.beginFill(0x000000, .35).drawRect(0, 1462, C.W, 458).endFill();
+app.stage.addChild(shade);
+// ambient flakes / embers
+const ambient = [];
+for (let i = 0; i < 46; i++) {
+  const s = new PIXI.Sprite(T.dot); s.anchor.set(.5); s.blendMode = PIXI.BLEND_MODES.ADD;
+  const t = i % 2; s.tint = t ? 0xff8a2a : 0xd8f6ff; s.scale.set(rnd(.4, 1));
+  s.x = rnd(0, C.W); s.y = rnd(500, 1460); s.alpha = rnd(.3, .8);
+  ambient.push({ s, t, vy: t ? -rnd(.4, 1.1) : rnd(.4, 1.1), ph: rnd(0, 7) }); world.addChild(s);
+}
+
+// ================= state =================
+let units = [];          // {t,x,y,vy,sp,ph,s,dead,cap,tag}
+let dragons = [];        // {t,x,y,hp,max,big,c,body,wl,wr,bar,label,cd,stop}
+const count = [0, 0];
+let S;
+let front = C.W / 2, frontTarget = C.W / 2;
+const sideMemory = new Map();   // user -> last side, survives matches (memory only, session)
+const moments = [];             // MC hooks drained by the host page
+let matchLen = C.MATCH_SEC;
+let shake = 0;
+
+function newMatch() {
+  for (const u of units) unitLayer[u.t].removeChild(u.s);
+  for (const d of dragons) dragonLayer.removeChild(d.c);
+  tagLayer.removeChildren(); fxLayer.removeChildren(); groundFx.removeChildren();
+  sparks.length = 0; shards.length = 0; anims.length = 0; tags[0].length = tags[1].length = 0;
+  if (rat) { rat.c.destroy({ children: true }); rat = null; }
+  sweeps.length = 0;
+  units = []; dragons = []; count[0] = count[1] = 0; front = frontTarget = C.W / 2;
+  S = {
+    hp: [C.CASTLE_HP, C.CASTLE_HP], kills: [0, 0],
+    players: new Map(),    // user -> {side,name,pts,lastAt}
+    time: matchLen, phase: 'fight', said30: false, leadAt: -99, saidLow: [false, false], lead: -1,
+    round: 0, heart: [0, 0], nearSaid: [-1, -1], nearAt: [-99, -99], broken: [0, 0], ratDone: false, buff: [0, 0],
+    skillQ: [], skillAt: 0, shieldSaid: [false, false], cmt: [0, 0],
+  };
+  setTimeout(() => { for (const fn of waiting.splice(0)) fn(); }, 1500);   // after the "CHIẾN!" banner
+  for (const t of [0, 1]) paintHouses(t, 0);
+  setPhaseUI(0); music('round', 0);
+  $('result').classList.remove('on');
+  announce('CHIẾN!', '#fff'); sfx('gong');
+  moment('newMatch', {});
+}
+
+// ================= spawning =================
+function spawnSquad(t, n, owner) {
+  n = Math.min(n, C.MAX_UNITS_PER_TEAM - count[t]);
+  const y0 = rnd(C.FIELD[0] + 20, C.FIELD[1] - 30);
+  for (let i = 0; i < n; i++) {
+    const cap = owner && i === 0;
+    const s = new PIXI.Sprite(T.unit[t][cap ? 1 : 0]);
+    const u = { t, x: C.CASTLE_X[t] + DIR[t] * rnd(0, 40) - (t ? 30 : 10), y: Math.min(C.FIELD[1] - 20, Math.max(C.FIELD[0], y0 + rnd(-40, 40))), vy: rnd(-.25, .25), sp: rnd(2.2, 3), ph: rnd(0, 7), s, dead: false, cap, tag: null };
+    if (cap) { u.sp = 2.4; attachTag(u, owner); }
+    unitLayer[t].addChild(s); units.push(u); count[t]++;
+  }
+}
+// name tag over a captain; only the newest few per side keep one
+const tags = [[], []];
+function attachTag(u, name) {
+  const txt = new PIXI.Text(name, { fontFamily: 'Be Vietnam Pro', fontWeight: '800', fontSize: 24, fill: u.t ? '#ffe3a3' : '#e6fbff', stroke: '#000', strokeThickness: 6 });
+  txt.anchor.set(.5, 1); tagLayer.addChild(txt); u.tag = txt; u.tagUntil = gameNow + 5;   // name shows 5s, then the captain fights unnamed
+  const list = tags[u.t]; list.push(u);
+  while (list.length > C.NAME_TAGS_PER_TEAM) { const old = list.shift(); if (old.tag) { old.tag.destroy(); old.tag = null; } }
+}
+function dropTag(u) { if (!u.tag) return; u.tag.destroy(); u.tag = null; const l = tags[u.t]; const i = l.indexOf(u); if (i >= 0) l.splice(i, 1); }
+
+function spawnDragon(t, big, owner) {
+  if (dragons.filter(d => d.t === t).length >= C.MAX_DRAGONS_PER_TEAM) return false;
+  const c = new PIXI.Container();
+  const wl = new PIXI.Sprite(T.wing[t]), wr = new PIXI.Sprite(T.wing[t]), body = new PIXI.Sprite(T.dragon[t]);
+  // wing root sits on the back; wings sweep backward (away from the enemy)
+  wl.anchor.set(14 / 220, 156 / 170); wr.anchor.set(14 / 220, 156 / 170);
+  body.anchor.set((t === ICE ? 150 : 190) / 340, 140 / 240);
+  wl.position.set(-6 * DIR[t], -26); wr.position.set(14 * DIR[t], -32);
+  wl.scale.x = -DIR[t]; wr.visible = false; wl.visible = !useArt;   // the picture bosses have no cape
+  const bar = new PIXI.Graphics();
+  // name says whose boss it is: "Chó chúa · Hoàng Long" in the team colour, so a gifter's name never looks like the other side
+  const label = new PIXI.Text(`${TEAM[t]} ${big ? 'chúa' : 'khổng lồ'}${owner ? ' · ' + owner : ''}`, { fontFamily: 'Be Vietnam Pro', fontWeight: '900', fontSize: 30, fill: TCOL[t], stroke: '#000', strokeThickness: 7 });
+  label.anchor.set(.5, 1); label.y = -158;
+  c.addChild(wr, body, wl, bar, label);
+  const aura = new PIXI.Sprite(T.dot); aura.anchor.set(.5); aura.scale.set(16); aura.tint = t ? 0xff6a1a : 0x6fd8ff; aura.alpha = .35; aura.blendMode = PIXI.BLEND_MODES.ADD;
+  const rays = new PIXI.Sprite(T.rays); rays.anchor.set(.5); rays.position.set(0, -30); rays.scale.set(.85); rays.tint = big ? 0xffd34e : t ? 0xff8a3a : 0x8fe6ff; rays.blendMode = PIXI.BLEND_MODES.ADD; rays.alpha = .55;
+  c.addChildAt(rays, 0); c.addChildAt(aura, 0);
+  const k = big ? 1.5 : 1.0; label.scale.set(1 / k);
+  const max = big ? 320 : 120;
+  // lands on its own side, just behind the front line (never in enemy ground)
+  const x = Math.max(C.CASTLE_X[0] + 110, Math.min(C.CASTLE_X[1] - 110, front - DIR[t] * rnd(140, 240)));
+  const y = rnd(C.FIELD[0] + 230, C.FIELD[1] - 110);   // keep the name tag clear of the side chips
+  const d = { t, x, y, hp: max, max, big, k, c, body, wl, wr, bar, label, aura, rays, cd: 1.6, stop: false, intro: 1.25 };
+  setTimeout(() => sfx('whoosh'), 700);   // falling whistle just before the slam
+  c.scale.set(k * .2); c.alpha = 0;
+  dragonLayer.addChild(c); dragons.push(d);
+  summonCircle(x, y + 40 * k, t, big);
+  cinematic(x, y, big ? 2600 : 2100, !!owner);   // gift dragons get priority over combo dragons
+  announce(`${TEAM[t].toUpperCase()} ${big ? 'CHÚA' : 'KHỔNG LỒ'} XUẤT HIỆN!`, TCOL[t]);
+  moment('dragon', { side: t, big, name: owner || null });
+  return true;
+}
+
+// ---------- summon visuals: rune circle + light pillar, then a landing shockwave ----------
+const anims = [];   // {s, kind, age, life, ...}
+function summonCircle(x, y, t, big) {
+  const tint = big ? 0xffd34e : t ? 0xff7a2a : 0x8fe6ff;
+  const ring = new PIXI.Sprite(T.rune); ring.anchor.set(.5); ring.position.set(x, y); ring.tint = tint; ring.blendMode = PIXI.BLEND_MODES.ADD; ring.scale.set(0);
+  ring.skew.set(0, 0);
+  const beam = new PIXI.Sprite(T.beam); beam.anchor.set(.5, 1); beam.position.set(x, y + 10); beam.tint = tint; beam.blendMode = PIXI.BLEND_MODES.ADD; beam.scale.set(0, 1.1); beam.alpha = 0;
+  groundFx.addChild(ring); fxLayer.addChild(beam);
+  const k = big ? 1.25 : .9;
+  anims.push({ s: ring, kind: 'rune', age: 0, life: 2.4, k });
+  anims.push({ s: beam, kind: 'beam', age: 0, life: 1.4, k, delay: .35 });
+  burst(x, y, t, big ? 26 : 14, 1.6);
+}
+function shockwave(x, y, t, big) {
+  const ring = new PIXI.Sprite(T.ring); ring.anchor.set(.5); ring.position.set(x, y); ring.tint = big ? 0xffe08a : t ? 0xffa04a : 0xcff6ff; ring.blendMode = PIXI.BLEND_MODES.ADD; ring.scale.set(.2, .1);
+  fxLayer.addChild(ring);
+  anims.push({ s: ring, kind: 'wave', age: 0, life: .7, k: big ? 3.2 : 2.2 });
+  // landing clears enemies around the dragon
+  const r = big ? 230 : 160;
+  for (const u of units) if (!u.dead && u.t !== t && Math.hypot(u.x - x, (u.y - y) * 1.6) < r) kill(u, t);
+  burst(x, y, t, big ? 40 : 24, 2.2);
+  shake = big ? 26 : 14;
+}
+// the boss hits the ground: crater, dust ring, white flash, camera punch, "RẦM!"
+function slam(x, y, t, big) {
+  const d = dragons.find(o => Math.abs(o.x - x) < 1); if (d) d.landAt = gameNow;
+  const cr = new PIXI.Sprite(T.crack); cr.anchor.set(.5); cr.position.set(x, y); cr.scale.set(big ? 1.3 : 1, (big ? 1.3 : 1) * .42); groundFx.addChild(cr);
+  anims.push({ s: cr, kind: 'decal', age: 0, life: 4.5 });
+  for (let i = 0; i < 18; i++) {   // dust rolls outward along the ground
+    const s = new PIXI.Sprite(T.dot); s.anchor.set(.5); s.tint = 0xd9cbb4; s.alpha = .55; s.scale.set(rnd(3, 5)); s.position.set(x, y);
+    fxLayer.addChild(s); const a = i / 18 * 6.28;
+    anims.push({ s, kind: 'dust', age: 0, life: rnd(.8, 1.2), vx: Math.cos(a) * rnd(5, 8), vy: Math.sin(a) * rnd(1.5, 2.5) });
+  }
+  lightFlash(x, y - 40, big ? 0xfff0b0 : 0xffffff, big ? 26 : 18);
+  screenFlash(0xffffff, .55);
+  burst(x, y, t, big ? 50 : 30, 3);
+  const txt = new PIXI.Text('RẦM!', { fontFamily: 'Be Vietnam Pro', fontWeight: '900', fontSize: 120, fill: '#fff6d8', stroke: '#000', strokeThickness: 12 });
+  txt.anchor.set(.5); txt.position.set(x, y - 230); txt.rotation = -.12 * DIR[t]; fxLayer.addChild(txt);
+  anims.push({ s: txt, kind: 'pop', age: 0, life: 1 });
+  cam.z += .12; shake = big ? 36 : 24;
+  sfx('gong'); sfx('impact'); sfx('spell');
+}
+// soft additive glow that blooms and fades
+function lightFlash(x, y, tint, size) {
+  const s = new PIXI.Sprite(T.dot); s.anchor.set(.5); s.position.set(x, y); s.tint = tint; s.blendMode = PIXI.BLEND_MODES.ADD; s.scale.set(size * .4);
+  fxLayer.addChild(s); anims.push({ s, kind: 'glow', age: 0, life: .45, k: size });
+}
+// full-screen tint pulse (outside the camera)
+const flashG = new PIXI.Graphics(); flashG.beginFill(0xffffff).drawRect(0, 0, C.W, C.H).endFill(); flashG.alpha = 0; flashG.blendMode = PIXI.BLEND_MODES.ADD;
+app.stage.addChild(flashG);
+function screenFlash(tint, a) { flashG.tint = tint; flashG.alpha = Math.max(flashG.alpha, a); }
+function runAnims(gdt) {
+  flashG.alpha = Math.max(0, flashG.alpha - gdt * 2.2);
+  for (let i = anims.length - 1; i >= 0; i--) {
+    const a = anims[i];
+    if (a.delay > 0) { a.delay -= gdt; continue; }
+    a.age += gdt; const p = a.age / a.life;
+    if (a.kind === 'rune') {
+      const grow = Math.min(1, a.age / .45), e = 1 - Math.pow(1 - grow, 3);
+      a.s.scale.set(a.k * e, a.k * e * .45);   // flattened = lying on the ground
+      a.s.rotation += gdt * 1.6;
+      a.s.alpha = p > .7 ? (1 - p) / .3 : 1;
+    } else if (a.kind === 'beam') {
+      a.s.alpha = p < .25 ? p / .25 : (1 - p) / .75;
+      a.s.scale.set(a.k * (p < .25 ? p / .25 : 1 - (p - .25) * .6), 1.1);
+    } else if (a.kind === 'wave') {
+      const e = 1 - Math.pow(1 - p, 2);
+      a.s.scale.set(a.k * e, a.k * e * .5); a.s.alpha = 1 - p;
+    } else if (a.kind === 'decal') {
+      a.s.alpha = p < .7 ? 1 : (1 - p) / .3;
+    } else if (a.kind === 'dust') {
+      a.s.x += a.vx * gdt * 30; a.s.y += a.vy * gdt * 30; a.vx *= .94; a.vy *= .94; a.s.scale.set(a.s.scale.x + gdt * 3); a.s.alpha = .55 * (1 - p);
+    } else if (a.kind === 'glow') {
+      a.s.scale.set(a.k * (.4 + .6 * Math.sqrt(p))); a.s.alpha = 1 - p;
+    } else if (a.kind === 'pop') {
+      a.s.scale.set(p < .15 ? .4 + p / .15 * .8 : 1.2 - (p - .15) * .2); a.s.alpha = p > .7 ? (1 - p) / .3 : 1; a.s.y -= gdt * 30;
+    }
+    if (p >= 1) { a.s.destroy(); anims.splice(i, 1); }
+  }
+}
+
+// ---------- camera: close-up + slow motion on big moments ----------
+const cam = { x: C.W / 2, y: C.H / 2, z: 1, tx: C.W / 2, ty: C.H / 2, tz: 1 };
+let ts = 1, tsTarget = 1, cine = null, lastCine = -1e9;
+function cinematic(x, y, ms, important) {
+  const now = performance.now();
+  if (cine) return false;   // never cut one close-up with another
+  if (now - lastCine < (important ? 2500 : 9000)) return false;   // gap after the previous shot ends: gifts 2.5s, other moments 9s
+  lastCine = now + ms;
+  cine = { until: now + ms };
+  cam.tx = x; cam.ty = y; cam.tz = 1.8; tsTarget = .35;
+  return true;
+}
+function updateCamera(dt) {
+  if (cine && performance.now() > cine.until) { cine = null; cam.tx = C.W / 2; cam.ty = C.H / 2; cam.tz = 1; tsTarget = 1; }
+  const k = Math.min(1, dt * (cine ? 4 : 2.5));
+  cam.x += (cam.tx - cam.x) * k; cam.y += (cam.ty - cam.y) * k; cam.z += (cam.tz - cam.z) * k;
+  ts += (tsTarget - ts) * Math.min(1, dt * 5);
+  const z = cam.z;
+  // keep the focus point near the middle of the battle band, never show past the edges
+  let wx = C.W / 2 - cam.x * z, wy = 960 - cam.y * z;
+  wx = Math.min(0, Math.max(C.W - C.W * z, wx)); wy = Math.min(0, Math.max(C.H - C.H * z, wy));
+  if (shake > .3) { wx += rnd(-shake, shake); wy += rnd(-shake, shake); shake *= Math.pow(.86, dt * 60); } else shake = 0;
+  world.scale.set(z); world.position.set(wx, wy);
+  dim.alpha = Math.min(.55, (z - 1) / .8 * .55);
+  tagLayer.alpha = 1 - Math.min(1, (z - 1) / .4);   // hide crowd name tags during the close-up
+  // UI fades back a little during the close-up so the shot stays clean
+  ui.style.opacity = String(1 - Math.min(.5, (z - 1) / .8 * .5));
+}
+
+// ---------- fx ----------
+const sparks = [];
+function burst(x, y, t, n, power = 1) {
+  for (let i = 0; i < n && sparks.length < 260; i++) {
+    const s = new PIXI.Sprite(T.dot); s.anchor.set(.5); s.tint = t ? 0xff9a3a : 0xbff0ff; s.scale.set(rnd(.5, 1.2) * power);
+    s.position.set(x, y); fxLayer.addChild(s);
+    const a = rnd(0, 6.28), v = rnd(2, 7) * power;
+    sparks.push({ s, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: rnd(.35, .7) });
+  }
+}
+const shards = [];   // skill 1: fish (cats) / bones (dogs) rain down in 3 waves
+function spellRain(t) {
+  const enemy = units.filter(u => u.t !== t && !u.dead);
+  const pick = () => enemy.length ? enemy[Math.random() * enemy.length | 0] : { x: C.CASTLE_X[1 - t] - DIR[t] * 150, y: (C.FIELD[0] + C.FIELD[1]) / 2 };
+  for (let w = 0; w < 3; w++) {
+    const target = rat && Math.random() < .3 ? rat : pick();
+    for (let i = 0; i < 10; i++) {
+      const s = new PIXI.Sprite(t === ICE ? T.fish : T.bone); s.anchor.set(.5); s.scale.set(rnd(.9, 1.3));
+      const tx = target.x + rnd(-120, 120), ty = Math.max(C.FIELD[0], Math.min(C.FIELD[1], target.y + rnd(-100, 100)));
+      s.position.set(tx + rnd(-60, 60), ty - rnd(600, 800) - w * 380); s.rotation = rnd(0, 6); fxLayer.addChild(s);
+      shards.push({ s, t, tx, ty, v: rnd(26, 34), spin: rnd(-.3, .3) });
+    }
+  }
+}
+// skill 2: a full-height wave runs from the front toward the enemy castle
+const sweeps = [];
+function sweepWave(t) {
+  const s = new PIXI.Sprite(t === ICE ? T.claw : T.bark); s.anchor.set(.5); s.tint = t ? 0xffa04a : 0xbff4ff; s.blendMode = PIXI.BLEND_MODES.ADD;
+  s.scale.set(DIR[t], (C.FIELD[1] - C.FIELD[0] + 120) / 1000); s.position.set(front - DIR[t] * 60, (C.FIELD[0] + C.FIELD[1]) / 2);
+  const glow = new PIXI.Sprite(T.dot); glow.anchor.set(.5); glow.tint = t ? 0xffa04a : 0xbff4ff; glow.blendMode = PIXI.BLEND_MODES.ADD; glow.scale.set(9, 70); glow.alpha = .55;
+  glow.position.set(s.x, s.y); fxLayer.addChild(glow, s);
+  sweeps.push({ t, s, glow, id: Math.random(), kills: 0 });
+  cinematic(front, (C.FIELD[0] + C.FIELD[1]) / 2, 1300, false);
+  shake = 12;
+}
+// ---------- Vua Chuột: neutral boss mid-match; the side that deals more damage gets a 1-minute buff ----------
+let rat = null;
+function spawnRat() {
+  const c = new PIXI.Container(), body = new PIXI.Sprite(T.rat); body.anchor.set(170 / 340, 140 / 240);
+  const aura = new PIXI.Sprite(T.dot); aura.anchor.set(.5); aura.scale.set(18); aura.tint = 0xb06cff; aura.alpha = .4; aura.blendMode = PIXI.BLEND_MODES.ADD;
+  const bar = new PIXI.Graphics(), label = new PIXI.Text('VUA CHUỘT', { fontFamily: 'Be Vietnam Pro', fontWeight: '900', fontSize: 30, fill: '#d9b8ff', stroke: '#000', strokeThickness: 7 });
+  label.anchor.set(.5, 1); label.y = -160;
+  c.addChild(aura, body, bar, label); dragonLayer.addChild(c);
+  rat = { x: front, y: (C.FIELD[0] + C.FIELD[1]) / 2, hp: C.RAT_HP, max: C.RAT_HP, dmg: [0, 0], left: C.RAT_SEC, cd: 2.5, intro: 1.25, c, bar, aura };
+  c.alpha = 0; c.scale.set(.25);
+  summonCircle(rat.x, rat.y + 50, 0, true); groundFx.children[groundFx.children.length - 1].tint = 0xb06cff;
+  cinematic(rat.x, rat.y, 2600, true);
+  announce('VUA CHUỘT XUẤT HIỆN!', '#d9b8ff'); sfx('power'); sfx('gong');
+  moment('rat', {});
+}
+function hitRat(by, dmg) { if (!rat || rat.intro > 0 || rat.hp <= 0) return; rat.hp -= dmg; rat.dmg[by] += dmg; }
+function stepRat(dt, f) {
+  if (!rat) return;
+  if (rat.intro > 0) { rat.intro -= dt; if (rat.intro <= 0) { shockwaveAll(rat.x, rat.y + 40, 200); } return; }
+  rat.x += (front - rat.x) * Math.min(1, .02 * f);   // sits on the front line
+  rat.left -= dt; rat.cd -= dt;
+  // units touching the rat chip at it; some get knocked out
+  let n = 0;
+  for (const u of units) {
+    if (u.dead || Math.abs(u.x - rat.x) > 85 || Math.abs(u.y - rat.y) > 75) continue;
+    u.fighting = true;
+    if (Math.random() < .06 * f) { hitRat(u.t, 1); if (Math.random() < .35) kill(u, -1); if (++n > 30) break; }
+  }
+  if (rat.cd <= 0) { rat.cd = 2.5; shockwaveAll(rat.x, rat.y + 40, 170); sfx('impact'); }
+  if (rat.hp <= 0 || rat.left <= 0) {
+    const won = rat.hp <= 0, w = rat.dmg[0] === rat.dmg[1] ? -1 : rat.dmg[0] > rat.dmg[1] ? 0 : 1;
+    burst(rat.x, rat.y, 0, 40, 2.4); burst(rat.x, rat.y, 1, 40, 2.4);
+    rat.c.destroy({ children: true }); rat = null; S.ratDone = true;
+    if (won && w >= 0) {
+      S.buff[w] = gameNow + C.BUFF_SEC; sfx('heal');
+      announce(`PHE ${TEAM[w].toUpperCase()} HẠ VUA CHUỘT!`, TCOL[w]);
+      moment('ratDown', { side: w });
+    } else { announce('VUA CHUỘT CHẠY MẤT!', '#d9b8ff'); moment('ratGone', {}); }
+  }
+}
+// rat slam hits both sides
+function shockwaveAll(x, y, r) {
+  const ring = new PIXI.Sprite(T.ring); ring.anchor.set(.5); ring.position.set(x, y); ring.tint = 0xc89bff; ring.blendMode = PIXI.BLEND_MODES.ADD; ring.scale.set(.2, .1);
+  fxLayer.addChild(ring); anims.push({ s: ring, kind: 'wave', age: 0, life: .7, k: r / 75 });
+  let n = 0;
+  for (const u of units) if (!u.dead && Math.hypot(u.x - x, (u.y - y) * 1.6) < r) { kill(u, -1); if (++n > 60) break; }
+  shake = Math.max(shake, 10);
+}
+const buffed = t => S.buff[t] > gameNow;
+
+// ================= input =================
+const $ = id => document.getElementById(id);
+function cleanName(n, user) { n = String(n || user || 'bạn').trim(); if (isBad(n)) n = String(user || 'bạn'); return n.slice(0, 18); }
+
+// The side a viewer plays for. Picked "1"/"2" wins; else the side they had before (this or an earlier match);
+// else they are new and quiet -> put on the side with fewer players so nobody's comment, heart or gift is lost.
+const pickedAt = new Map();   // user -> last time they switched side (stops flip-flopping every second)
+function playerOf(user, name, picked) {
+  let p = S.players.get(user);
+  if (p && picked !== null && picked !== p.side && performance.now() - (pickedAt.get(user) || 0) > C.SWITCH_GAP_MS) {
+    p.side = picked; sideMemory.set(user, picked); pickedAt.set(user, performance.now());   // changed their mind: "2" now helps Chó
+    moment('join', { name: p.name, side: picked });
+  }
+  if (p) { if (name) p.name = name; return { p, joined: false }; }
+  let side = picked ?? sideMemory.get(user), auto = false;
+  if (side === undefined || side === null) {
+    const n = [0, 0]; for (const q of S.players.values()) n[q.side]++;
+    side = n[0] < n[1] ? ICE : n[1] < n[0] ? FIRE : (Math.random() < .5 ? ICE : FIRE); auto = true;
+  }
+  p = { side, name: name || 'bạn', pts: 0, lastAt: 0, cmts: 0 };
+  S.players.set(user, p); sideMemory.set(user, side); pickedAt.set(user, performance.now());
+  moment('join', { name: p.name, side, auto });
+  return { p, joined: true };
+}
+// between matches (result screen) nothing is dropped: events wait and replay when the next match starts
+const waiting = [];
+function later(fn) { if (waiting.length < 400) waiting.push(fn); }
+
+function onComment(user, name, text) {
+  if (!S) return { side: null, joined: false };
+  name = cleanName(name, user);
+  const picked = parseSide(text);
+  if (S.phase !== 'fight') {   // result screen: remember the pick, count it when the match starts
+    if (picked !== null) sideMemory.set(user, picked);
+    later(() => onComment(user, name, text));
+    return { side: picked ?? sideMemory.get(user) ?? null, joined: false };
+  }
+  const { p, joined } = playerOf(user, name, picked);
+  p.pts += 1; p.cmts++; S.cmt[p.side]++;   // every comment counts for the side, even fast repeats
+  const now = performance.now();
+  if (now - p.lastAt >= C.USER_COOLDOWN_MS) { p.lastAt = now; spawnSquad(p.side, C.SQUAD, name); }   // units: at most one squad per 1.5s per person
+  return { side: p.side, joined };
+}
+function onLike(user, n, name) {
+  if (!S) return;
+  if (S.phase !== 'fight') { later(() => onLike(user, n, name)); return; }
+  const { p } = playerOf(user, name ? cleanName(name, user) : null, null);
+  p.pts += n / 10;
+  spawnSquad(p.side, Math.min(C.MAX_UNITS_PER_LIKE, Math.ceil(n / C.LIKES_PER_UNIT)), null);
+  addHearts(p.side, n);
+}
+const heartMult = t => C.PHASE_MULT[S.round] * (comeback(t) ? C.COMEBACK : 1);
+const comeback = t => S.hp[t] < S.hp[1 - t] - C.CASTLE_HP * .15;
+function addHearts(t, n, raw) {
+  const r = heartStep(S.heart[t], raw ? n : n * heartMult(t));
+  S.heart[t] = r.v;
+  for (const i of r.fired) if (S.skillQ.length < 6) S.skillQ.push([t, i]);
+  // MC nudge when a side is close to its next skill (at most every 20s per side)
+  const i = C.HEART_MS.findIndex(m => m > S.heart[t]), m = C.HEART_MS[i], prev = i ? C.HEART_MS[i - 1] : 0;
+  const now = gameNow;
+  if (S.heart[t] - prev >= (m - prev) * .8 && S.nearSaid[t] !== i && now - S.nearAt[t] > 20) {
+    S.nearSaid[t] = i; S.nearAt[t] = now; moment('heartNear', { side: t, left: Math.ceil(m - S.heart[t]), skill: SKILL[t][i] });
+  }
+  if (r.fired.includes(2)) S.nearSaid[t] = -1;
+}
+function onShare(user, name) {
+  if (!S) return;
+  if (S.phase !== 'fight') { later(() => onShare(user, name)); return; }
+  const { p } = playerOf(user, name ? cleanName(name, user) : null, null);
+  p.pts += 5; spawnSquad(p.side, 30, p.name);
+  moment('share', { name: p.name, side: p.side });
+}
+// coin = price of one item, n = new items in this event
+function onGift(user, name, coin, n) {
+  if (!S) return { side: null };
+  if (S.phase !== 'fight') { later(() => onGift(user, name, coin, n)); return { side: sideMemory.get(user) ?? null }; }   // gift on the result screen: fires as the next match opens
+  name = cleanName(name, user);
+  const { p } = playerOf(user, name, null);
+  p.pts += coin * n * 10;
+  const tier = giftTier(coin), times = Math.min(n, C.MAX_GIFT_EFFECTS), t = p.side;
+  sfx('coin');
+  for (let i = 0; i < times; i++) {
+    if (tier === 0) spawnSquad(t, 20, name);
+    else if (tier === 1) spawnSquad(t, 60, name);
+    else if (tier < 5) castSkill(t, tier - 2, name);
+    else { castSkill(t, 2, name); castSkill(t, 1, name); }
+  }
+  addHearts(t, coin * n * C.GIFT_HEARTS_PER_COIN, true);   // gifts nudge the shared bar too
+  if (tier < 4) moment('gift', { name, side: t, tier, skill: tier >= 2 ? SKILL[t][tier - 2] : null });   // bosses get their own line
+  const label = ['+20 lính', '+60 lính', SKILL[t][0], SKILL[t][1], 'Gọi ' + SKILL[t][2], 'Gọi ' + SKILL[t][2] + ' + ' + SKILL[t][1]][tier];
+  giftBanner(name, `${label}${times > 1 ? ' x' + times : ''} cho phe ${TEAM[t]}`, t, tier);
+  return { side: t };
+}
+// skill i (0 rain, 1 sweep, 2 boss) for side t; owner = gifter's name, null = earned by hearts
+function castSkill(t, i, owner) {
+  if (i === 2) { if (!spawnDragon(t, true, owner)) castSkill(t, 1, owner); return; }   // boss cap reached: fall back to skill 2
+  const col = t ? 0xff8a3a : 0x8fe6ff, mid = (C.FIELD[0] + C.FIELD[1]) / 2;
+  if (i === 0) { spellRain(t); sfx('whoosh'); screenFlash(col, .18); }
+  else {
+    sweepWave(t); sfx(t === ICE ? 'slash' : 'whooshHit'); sfx('spell'); screenFlash(col, .35);
+    // god rays over the caster's half
+    const b = new PIXI.Sprite(T.beam); b.anchor.set(.5, 1); b.position.set(t ? C.W * .75 : C.W * .25, C.FIELD[1] + 40); b.tint = col; b.blendMode = PIXI.BLEND_MODES.ADD; b.alpha = 0;
+    fxLayer.addChild(b); anims.push({ s: b, kind: 'beam', age: 0, life: 1.3, k: 3.2 });
+    lightFlash(front, mid, col, 30);
+  }
+  announce(`${SKILL[t][i].toUpperCase()}!`, TCOL[t]);
+  if (!owner) moment('skill', { side: t, skill: SKILL[t][i], level: i + 1 });
+}
+
+// ================= on-stage messages =================
+const annQ = []; let annBusy = false;
+function announce(msg, color) {
+  if (annQ.length >= 2 || annQ.some(a => a[0] === msg)) return;
+  annQ.push([msg, color]); if (!annBusy) nextAnn();
+}
+function nextAnn() {
+  const a = annQ.shift(); if (!a) { annBusy = false; return; }
+  annBusy = true;
+  const el = $('announce').firstElementChild;
+  el.textContent = a[0]; el.style.color = a[1];
+  el.style.background = `linear-gradient(90deg, transparent, ${a[1] === '#fff' ? 'rgba(242,193,78,.55)' : a[1] + '88'} 20%, ${a[1] === '#fff' ? 'rgba(242,193,78,.55)' : a[1] + '88'} 80%, transparent)`;
+  el.style.color = '#fff';
+  el.classList.add('on');
+  setTimeout(() => { el.classList.remove('on'); setTimeout(nextAnn, 280); }, 1500);
+}
+const giftQ = []; let giftBusy = false;
+function giftBanner(name, effect, t, tier) {
+  if (tier === 0 && (giftBusy || giftQ.length)) return;   // small gifts only show when the banner is free
+  if (giftQ.length >= 3) giftQ.shift();
+  giftQ.push([name, effect, t]); if (!giftBusy) nextGift();
+}
+function nextGift() {
+  const g = giftQ.shift(); if (!g) { giftBusy = false; return; }
+  giftBusy = true;
+  const el = $('giftBanner');
+  el.querySelector('.n').textContent = g[0];
+  el.querySelector('.e').textContent = g[1]; el.querySelector('.e').style.color = TCOL[g[2]];
+  el.classList.add('on');
+  setTimeout(() => { el.classList.remove('on'); setTimeout(nextGift, 320); }, 2600);
+}
+function moment(type, data) {
+  moments.push({ type, ...data });
+  if (moments.length > 50) moments.shift();
+  if (VOICE) logMC(type, data);
+}
+
+// ================= loop =================
+const CELL = 26;
+let tick = 0, uiAcc = 0, fpsFrames = 0, fpsShown = 0;
+const ui = document.getElementById('ui');
+let gameNow = 0;   // slowed clock, drives all battle animation
+let simSpeed = 1;  // test panel fast-forward (x5); always 1 on the live stage
+app.ticker.add(() => {
+  const real = Math.min(app.ticker.deltaMS / 1000, .1);
+  const dt = real * ts * simSpeed;
+  const f = dt * 30; tick++; fpsFrames++;
+  gameNow += dt;
+  const now = performance.now() / 1000;
+  if (S && S.phase === 'fight') step(dt, f, now);
+  animate(dt, f, gameNow);
+  runAnims(dt);
+  updateCamera(real);
+  uiAcc += real; if (uiAcc > .2) { uiAcc = 0; renderUI(now); }
+});
+
+function step(dt, f, now) {
+  // grid
+  const grid = new Map();
+  for (const u of units) {
+    const k = ((u.x / CELL) | 0) * 4096 + ((u.y / CELL) | 0);
+    const c = grid.get(k); if (c) c.push(u); else grid.set(k, [u]);
+  }
+  for (const u of units) {
+    if (u.dead) continue;
+    const cx = (u.x / CELL) | 0, cy = (u.y / CELL) | 0;
+    let foe = null;
+    for (let dx = -1; dx <= 1 && !foe; dx++) for (let dy = -1; dy <= 1 && !foe; dy++) {
+      const c = grid.get((cx + dx) * 4096 + cy + dy); if (!c) continue;
+      for (const o of c) if (!o.dead && o.t !== u.t && Math.abs(o.x - u.x) < 20 && Math.abs(o.y - u.y) < 20) { foe = o; break; }
+    }
+    u.fighting = !!foe;
+    if (!foe && rat && rat.intro <= 0 && Math.abs(u.x - rat.x) < 85 && Math.abs(u.y - rat.y) < 75) { u.fighting = true; continue; }   // stuck fighting the rat
+    if (foe) {
+      if (Math.random() < .07 * f) {
+        // captains are a bit tougher so name tags survive a little longer; the rat-slayer side is tougher for a minute
+        const pu = (u.cap ? .35 : .5) * (buffed(u.t) ? .6 : 1), pf = (foe.cap ? .35 : .5) * (buffed(foe.t) ? .6 : 1);
+        const loser = Math.random() < pu / (pu + pf) ? u : foe;
+        kill(loser, 1 - loser.t); bump(loser.x);
+      }
+      continue;
+    }
+    u.x += DIR[u.t] * u.sp * (buffed(u.t) ? 1.3 : 1) * f; u.y += u.vy * f;
+    if (u.y < C.FIELD[0] || u.y > C.FIELD[1] - 10) u.vy *= -1;
+    const enemyFace = C.CASTLE_X[1 - u.t];
+    if (DIR[u.t] > 0 ? u.x >= enemyFace : u.x <= enemyFace) { u.dead = true; hitCastle(1 - u.t, C.UNIT_CASTLE_DMG * (S.round === 3 ? 2 : 1), u.x, u.y); }
+  }
+  // dragons
+  for (const d of dragons) {
+    if (d.hp <= 0) continue;
+    if (d.intro > 0) {   // descending: no fighting until it lands
+      d.intro -= dt;
+      if (d.intro <= 0) { shockwave(d.x, d.y + 30 * d.k, d.t, d.big); slam(d.x, d.y + 40 * d.k, d.t, d.big); }
+      continue;
+    }
+    const foeD = dragons.find(o => o.t !== d.t && o.hp > 0 && Math.abs(o.x - d.x) < 260 && Math.abs(o.y - d.y) < 170);
+    const nearRat = rat && rat.intro <= 0 && Math.abs(rat.x - d.x) < 260 && Math.abs(rat.y - d.y) < 200;
+    d.stop = !!foeD || nearRat;
+    if (!d.stop) d.x += DIR[d.t] * (d.big ? 1.1 : 1.4) * f;
+    d.cd -= dt;
+    if (d.cd <= 0) { d.cd = d.big ? 1.1 : 1.5; breathe(d, foeD); }
+    // units touching the dragon chip at it
+    let touched = 0;
+    for (const u of units) {
+      if (u.dead || u.t === d.t) continue;
+      if (Math.abs(u.x - d.x) < 60 * d.c.scale.x && Math.abs(u.y - d.y) < 50 * d.c.scale.y) { kill(u, d.t); d.hp -= 1; if (++touched > 6) break; }
+    }
+    const enemyFace = C.CASTLE_X[1 - d.t];
+    if (DIR[d.t] > 0 ? d.x >= enemyFace - 40 : d.x <= enemyFace + 40) {
+      hitCastle(1 - d.t, (d.big ? 1200 : 600) * (S.round === 3 ? 2 : 1), d.x, d.y); d.hp = 0; shake = 20; sfx('gong'); sfx('impact');
+      shockwave(d.x, d.y, d.t, d.big);
+      cinematic(d.x, d.y, 1600, false);
+      announce(`ĐẬP THẲNG VÀO THÀNH ${TEAM[1 - d.t].toUpperCase()}!`, TCOL[d.t]);
+    }
+  }
+  // skill 1 rain
+  for (let i = shards.length - 1; i >= 0; i--) {
+    const sh = shards[i];
+    sh.s.y += sh.v * f; sh.s.x += (sh.tx - sh.s.x) * .05 * f; sh.s.rotation += sh.spin * f;
+    if (tick % 3 === 0 && sh.s.y > C.FIELD[0] - 300 && sparks.length < 240) {   // light trail behind each falling fish / bone
+      const g = new PIXI.Sprite(T.dot); g.anchor.set(.5); g.position.set(sh.s.x, sh.s.y - 10); g.tint = sh.t ? 0xffa04a : 0x9feaff; g.blendMode = PIXI.BLEND_MODES.ADD; g.scale.set(1.6, 3);
+      fxLayer.addChild(g); sparks.push({ s: g, vx: 0, vy: 0, life: .45, fade: true });
+    }
+    if (sh.s.y >= sh.ty) {
+      burst(sh.tx, sh.ty, sh.t, 8, 1.3); sfx('impact'); lightFlash(sh.tx, sh.ty, sh.t ? 0xffb060 : 0xbff4ff, 7);
+      for (const u of units) if (!u.dead && u.t !== sh.t && Math.abs(u.x - sh.tx) < 70 && Math.abs(u.y - sh.ty) < 60) kill(u, sh.t);
+      for (const d of dragons) if (d.t !== sh.t && Math.abs(d.x - sh.tx) < 90 && Math.abs(d.y - sh.ty) < 90) d.hp -= 4;
+      if (rat && Math.abs(rat.x - sh.tx) < 110 && Math.abs(rat.y - sh.ty) < 110) hitRat(sh.t, 12);
+      sh.s.destroy(); shards.splice(i, 1);
+    }
+  }
+  // skill 2 sweep: cats claw (kill 70%), dogs bark (kill 40%, shove the rest back)
+  for (let i = sweeps.length - 1; i >= 0; i--) {
+    const w = sweeps[i];
+    w.s.x += DIR[w.t] * 20 * f; w.glow.x = w.s.x;   // slow enough for the eye to follow
+    for (const u of units) {
+      if (u.dead || u.t === w.t || u.hitBy === w.id || Math.abs(u.x - w.s.x) > 45) continue;
+      u.hitBy = w.id;
+      if (w.kills < 300 && Math.random() < (w.t === ICE ? .7 : .4)) { kill(u, w.t); w.kills++; }
+      else if (w.t === FIRE) u.x = Math.max(C.CASTLE_X[0] + 10, u.x - 90);
+    }
+    for (const d of dragons) if (d.t !== w.t && d.hitBy !== w.id && Math.abs(d.x - w.s.x) < 60) { d.hitBy = w.id; d.hp -= 40; burst(d.x, d.y, w.t, 16, 1.6); }
+    if (rat && !w.hitRat && Math.abs(rat.x - w.s.x) < 60) { w.hitRat = 1; hitRat(w.t, 60); }
+    if (DIR[w.t] > 0 ? w.s.x > C.CASTLE_X[1] : w.s.x < C.CASTLE_X[0]) { w.s.destroy(); w.glow.destroy(); sweeps.splice(i, 1); }
+  }
+  stepRat(dt, f);
+  sweep();
+  // heart skills fire one at a time so two big moments never overlap
+  if (S.skillQ.length && gameNow > S.skillAt) { const [t, i] = S.skillQ.shift(); castSkill(t, i, null); S.skillAt = gameNow + (i === 2 ? 3.5 : 1.8); }
+  // fight clatter: a quiet clash every so often while the lines are locked
+  if (tick % 70 === 0 && units.some(u => u.fighting)) sfx(Math.random() < .5 ? 'clash1' : 'clash2');
+
+  // front line: between the leading 10% of each army
+  if (tick % 6 === 0) {
+    const xs = [[], []];
+    for (const u of units) xs[u.t].push(u.x);
+    const lead = (a, t) => { if (!a.length) return C.CASTLE_X[t]; a.sort((p, q) => p - q); return t === ICE ? a[Math.floor(a.length * .9)] : a[Math.floor(a.length * .1)]; };
+    frontTarget = Math.max(230, Math.min(850, (lead(xs[0], 0) + lead(xs[1], 1)) / 2));
+  }
+  front += (frontTarget - front) * Math.min(1, .04 * f);
+
+  // narration hooks
+  const lead = count[0] > count[1] * 1.8 && count[0] > 120 ? 0 : count[1] > count[0] * 1.8 && count[1] > 120 ? 1 : -1;
+  // say it once per lead change, and repeat at most every 25s while the lead holds (lead flickers near the threshold)
+  if (lead !== -1 && (lead !== S.lead || now - S.leadAt > 25)) { S.lead = lead; S.leadAt = now; announce(`${TEAM[lead].toUpperCase()} ĐANG ÁP ĐẢO!`, TCOL[lead]); moment('dominate', { side: lead }); }
+  for (const t of [0, 1]) if (!S.saidLow[t] && S.hp[t] < C.CASTLE_HP * .25) { S.saidLow[t] = true; announce(`THÀNH ${TEAM[t].toUpperCase()} SẮP VỠ!`, TCOL[t]); moment('castleLow', { side: t }); }
+  S.time -= dt;
+  const frac = 1 - S.time / matchLen, r = phaseOf(frac);
+  if (r !== S.round) {
+    S.round = r; setPhaseUI(r); sfx('gong'); music('round', r);
+    announce(r === 3 ? `${PHASES[3][0]} · TIM X2` : `${PHASES[r][0]} · ${PHASES[r][1].toUpperCase()}`, '#fff');
+    moment('round', { round: r });
+  }
+  if (!S.ratDone && !rat && frac >= C.RAT_AT) spawnRat();
+  for (const t of [0, 1]) if (!S.shieldSaid[t] && C.FLOOR[S.round] > 0 && S.hp[t] <= C.FLOOR[S.round] * C.CASTLE_HP + 1) {
+    S.shieldSaid[t] = true; moment('shield', { side: t, round: S.round });
+  }
+  if (!S.said30 && S.time <= 30) { S.said30 = true; moment('last30', {}); announce('30 GIÂY CUỐI!', '#fff'); }
+  if (S.hp[0] <= 0 || S.hp[1] <= 0 || S.time <= 0) endMatch();
+}
+function kill(u, by) {
+  if (u.dead) return;
+  u.dead = true; if (by >= 0) S.kills[by]++;
+  setHp(u.t, S.hp[u.t] - C.LOSS_PER_UNIT);   // big crowds stall in the middle, so losses also wear the castle down
+  if (Math.random() < .2) burst(u.x, u.y, u.t, 3);   // few sparks: a full army dying must not strobe
+}
+// castle HP never drops below this round's floor; every quarter lost knocks down one house
+function setHp(t, v) {
+  S.hp[t] = Math.max(C.FLOOR[S.round] * C.CASTLE_HP, Math.min(C.CASTLE_HP, v));
+  const broken = S.hp[t] <= 0 ? 4 : Math.max(0, Math.floor((1 - S.hp[t] / C.CASTLE_HP) * 4 - 1e-6));
+  if (broken > S.broken[t]) {
+    S.broken[t] = broken; paintHouses(t, broken);
+    const y = castle[t].y + HOUSES[[1, 2, 0, 3][Math.min(3, broken - 1)]][0] - 80, x = t ? C.W - 110 : 110;
+    burst(x, y, t, 40, 2.4); shake = Math.max(shake, 18); sfx('spell'); sfx('impact');
+    if (broken < 4) { announce(`NHÀ ${TEAM[t].toUpperCase()} SẬP ${broken}/4 CĂN!`, TCOL[1 - t]); moment('houseDown', { side: t, broken }); }
+  }
+}
+function hitCastle(t, dmg, x, y) {
+  setHp(t, S.hp[t] - dmg);
+  if (Math.random() < .3 || dmg > 10) burst(x, y, 1 - t, dmg > 10 ? 30 : 4, dmg > 10 ? 2 : 1);
+  if (dmg > 10) castle[t].hitAt = performance.now();   // only dragon hits flash the castle
+  const bar = $(t ? 'hpFire' : 'hpIce');
+  if (!bar.classList.contains('hit')) { bar.classList.add('hit'); setTimeout(() => bar.classList.remove('hit'), 300); }
+}
+function breathe(d, foeD) {
+  const fx = new PIXI.Sprite(T.cone); fx.anchor.set(0, .5); fx.tint = d.t ? 0xff7a1a : 0xaee9ff; fx.blendMode = PIXI.BLEND_MODES.ADD;
+  const k = d.k;
+  // breath leaves the mouth (head is up-front of the body) and fans out toward the ground
+  const mx = d.x + DIR[d.t] * (useArt ? 45 : 140) * k, my = d.y - (useArt ? 50 : 40) * k;
+  fx.position.set(mx, my); fx.scale.set(DIR[d.t] * k * 1.1, k); fx.rotation = DIR[d.t] * .35; fx.alpha = 1;
+  fxLayer.addChild(fx); sparks.push({ s: fx, vx: 0, vy: 0, life: .45, fade: true });
+  const reach = 320 * k;
+  let n = 0;
+  for (const u of units) {
+    if (u.dead || u.t === d.t) continue;
+    const dx = (u.x - mx) * DIR[d.t];
+    if (dx > -20 && dx < reach && Math.abs(u.y - (my + dx * .35)) < 30 + dx * .3) { kill(u, d.t); if (++n > (d.big ? 40 : 22)) break; }
+  }
+  if (foeD) { foeD.hp -= d.big ? 34 : 22; burst(foeD.x, foeD.y, d.t, 12, 1.5); }
+  if (rat && Math.abs(rat.x - mx) < reach && Math.abs(rat.y - my) < 160) hitRat(d.t, d.big ? 40 : 25);
+}
+function sweep() {
+  if (!units.some(u => u.dead) && !dragons.some(d => d.hp <= 0)) return;
+  units = units.filter(u => { if (u.dead) { unitLayer[u.t].removeChild(u.s); count[u.t]--; dropTag(u); } return !u.dead; });
+  dragons = dragons.filter(d => {
+    if (d.hp > 0) return true;
+    burst(d.x, d.y, d.t, 30, 2); dragonLayer.removeChild(d.c); d.c.destroy({ children: true }); return false;
+  });
+}
+
+function animate(dt, f, now) {
+  // units: position + walk bob
+  for (const u of units) {
+    const bob = u.fighting ? Math.sin(now * 30 + u.ph) * 2 : Math.abs(Math.sin(now * 10 + u.ph)) * -4;
+    u.s.x = u.x - (u.cap ? 40 : 20); u.s.y = u.y - 34 + bob;
+    if (u.tag) {
+      const left = u.tagUntil - now;
+      if (left <= 0) dropTag(u);
+      else { u.tag.x = u.x; u.tag.y = u.y - 40; u.tag.alpha = Math.min(1, left / .6); }
+    }
+  }
+  for (const d of dragons) {
+    const flap = Math.sin(now * (d.intro > 0 ? 12 : d.stop ? 9 : 6) + d.x * .01);
+    d.wl.rotation = flap * .12 * (d.t ? 1 : -1);
+    d.wr.rotation = -flap * .3 * (d.t ? 1 : -1);
+    let y = d.y + Math.sin(now * 3 + d.x * .02) * 8, s = d.k;
+    if (d.intro > 0) { // drop in from above and grow
+      const p = Math.max(0, 1 - d.intro / 1.25), e = p * p;   // accelerates like a real drop
+      y = d.y - (1 - e) * 480; s = d.k * (.6 + .4 * Math.min(1, p * 1.6)); d.c.alpha = Math.min(1, p * 3);
+    } else d.c.alpha = 1;
+    const sq = d.landAt ? Math.max(0, 1 - (now - d.landAt) / .35) : 0;   // squash-and-stretch right after the slam
+    d.c.position.set(d.x, y); d.c.scale.set(s * (1 + sq * .18), s * (1 - sq * .22));
+    d.aura.alpha = .28 + Math.sin(now * 4) * .08;
+    d.rays.rotation += dt * .5; d.rays.alpha = (d.intro > 0 ? .25 : .45) + Math.sin(now * 3) * .12;
+    d.bar.visible = d.intro <= 0;
+    d.bar.clear().beginFill(0x000000, .7).drawRoundedRect(-62, -150, 124, 16, 8).endFill()
+      .beginFill(d.t ? 0xff8a2a : 0x7fe0ff).drawRoundedRect(-59, -147, 118 * Math.max(0, d.hp / d.max), 10, 5).endFill();
+  }
+  if (rat) {
+    let y = rat.y + Math.sin(now * 2.5) * 6, k = 1.15;
+    if (rat.intro > 0) { const p = Math.max(0, 1 - rat.intro / 1.25), e = 1 - Math.pow(1 - p, 3); y = rat.y - (1 - e) * 520; k *= .35 + .65 * e; rat.c.alpha = Math.min(1, p * 2.5); } else rat.c.alpha = 1;
+    rat.c.position.set(rat.x, y); rat.c.scale.set(k); rat.aura.alpha = .3 + Math.sin(now * 4) * .1;
+    const w0 = 158 * Math.min(1, rat.dmg[0] / rat.max), w1 = 158 * Math.min(1, rat.dmg[1] / rat.max);   // who is hurting the rat more
+    rat.bar.clear().beginFill(0x000000, .7).drawRoundedRect(-82, -152, 164, 18, 9).endFill()
+      .beginFill(0x7fe0ff).drawRect(-79, -149, w0, 12).endFill()
+      .beginFill(0xffa04a).drawRect(79 - w1, -149, w1, 12).endFill();
+  }
+  for (let i = sparks.length - 1; i >= 0; i--) {
+    const p = sparks[i]; p.life -= dt;
+    if (p.fade) p.s.alpha = Math.max(0, p.life / .45);
+    else { p.s.x += p.vx * f; p.s.y += p.vy * f; p.vy += .25 * f; p.s.alpha = Math.min(1, p.life * 2.5); }
+    if (p.life <= 0) { p.s.destroy(); sparks.splice(i, 1); }
+  }
+  for (const a of ambient) {
+    a.s.y += a.vy * f; a.s.x += Math.sin(now + a.ph) * .4 * f;
+    // flakes live on the ice side of the front, embers on the fire side
+    const wrongSide = a.t ? a.s.x < front : a.s.x > front;
+    a.s.visible = !wrongSide;
+    if (a.s.y > 1460) a.s.y = 500; if (a.s.y < 500) a.s.y = 1460;
+  }
+  for (const t of [0, 1]) {
+    const hitAgo = now * 1000 - (castle[t].hitAt || 0);
+    castle[t].tint = hitAgo < 120 ? 0xffaaaa : 0xffffff;
+  }
+  drawFront(now);
+}
+// jagged seam: fire ground is visible right of the front line
+const seamPts = Array.from({ length: 26 }, (_, i) => ({ y: 260 + i * 50, j: rnd(-26, 26) }));
+function drawFront(now) {
+  const pts = seamPts.map((p, i) => [front + p.j + Math.sin(now * 2 + i) * 6, p.y]);
+  fireMask.clear().beginFill(0xffffff);
+  fireMask.moveTo(pts[0][0], 0); for (const [x, y] of pts) fireMask.lineTo(x, y);
+  fireMask.lineTo(pts[pts.length - 1][0], C.H).lineTo(C.W, C.H).lineTo(C.W, 0).closePath().endFill();
+  seam.clear();
+  for (const [w, a, col] of [[34, .12, 0xffffff], [16, .3, 0xbff0ff], [6, .9, 0xffffff]]) {
+    seam.lineStyle(w, col, a); seam.moveTo(pts[0][0], pts[0][1]); for (const [x, y] of pts) seam.lineTo(x, y);
+  }
+  // steam puffs drifting up along the seam
+  if (tick % 4 === 0 && steam.children.length < 26) {
+    const s = new PIXI.Sprite(T.dot); s.anchor.set(.5); s.scale.set(rnd(3, 6)); s.alpha = .18; s.tint = 0xffffff;
+    const p = pts[(Math.random() * pts.length) | 0]; s.position.set(p[0] + rnd(-12, 12), p[1]); s.vy = -rnd(.6, 1.4); steam.addChild(s);
+  }
+  for (const s of [...steam.children]) { s.y += s.vy; s.alpha -= .002; s.x += (front - s.x) * .02; if (s.alpha <= 0) s.destroy(); }
+}
+
+// ================= UI =================
+function renderUI(now) {
+  if (!S) return;
+  for (const t of [0, 1]) {
+    const bar = $(t ? 'hpFire' : 'hpIce');
+    bar.querySelector('i').style.width = (S.hp[t] / C.CASTLE_HP * 100) + '%';
+    const shield = C.FLOOR[S.round] > 0 && S.hp[t] <= C.FLOOR[S.round] * C.CASTLE_HP + 1 ? '🛡 ' : '';
+    const hpTxt = Math.ceil(S.hp[t]).toLocaleString('vi-VN');
+    bar.querySelector('b').textContent = t ? `${shield}${hpTxt} 🐶` : `🐱 ${hpTxt} ${shield}`;
+    // heart bar: progress toward the next skill
+    const i = C.HEART_MS.findIndex(m => m > S.heart[t]), m = C.HEART_MS[i], prev = i ? C.HEART_MS[i - 1] : 0;
+    const hb = $(t ? 'heartFire' : 'heartIce'), k = (S.heart[t] - prev) / (m - prev), mult = heartMult(t);
+    hb.querySelector('i').style.width = (k * 100) + '%';
+    hb.classList.toggle('ready', k > .8);
+    const short = v => v >= 1000 ? (v / 1000).toLocaleString('vi-VN', { maximumFractionDigits: 1 }) + 'k' : String(Math.floor(v));
+    hb.querySelector('b').textContent = `${comeback(t) ? '⚡' : '❤'} ${short(S.heart[t])}/${short(m)} ${SKILL[t][i]}${mult > 1 ? ` x${mult.toLocaleString('vi-VN')}` : ''}`;   // ⚡ = losing side, hearts count x1.3
+    // top 1 shows big with a crown (the side's "boss"); top 2 and 3 ride along small on one line
+    const top = [...S.players.values()].filter(p => p.side === t).sort((a, b) => b.pts - a.pts).slice(0, 3);
+    const board = $(t ? 'boardFire' : 'boardIce'), rows = [];
+    if (!top.length) { const d = document.createElement('div'); d.textContent = t ? 'Gõ 2 để vào phe Chó' : 'Gõ 1 để vào phe Mèo'; d.style.color = '#c9b8a8'; rows.push(d); }
+    else {
+      const d1 = document.createElement('div'); d1.className = 'r1'; d1.textContent = top[0].name; d1.style.color = TCOL[t]; rows.push(d1);
+      if (top.length > 1) { const d2 = document.createElement('div'); d2.className = 'r23'; d2.textContent = top.slice(1).map((p, i) => `${i + 2}. ${p.name}`).join('   '); rows.push(d2); }
+    }
+    board.replaceChildren(...rows);
+  }
+  const m = Math.max(0, Math.ceil(S.time));
+  $('clock').textContent = `${m / 60 | 0}:${String(m % 60).padStart(2, '0')}`;
+  if (rat) $('phase').querySelector('small').textContent = `Vua Chuột · ${Math.ceil(rat.left)}s`;
+  else if (buffed(0) || buffed(1)) $('phase').querySelector('small').textContent = `${TEAM[buffed(0) ? 0 : 1]} mạnh thêm ${Math.ceil(S.buff[buffed(0) ? 0 : 1] - gameNow)}s`;
+  else $('phase').querySelector('small').textContent = PHASES[S.round][1];
+  $('clock').classList.toggle('hurry', S.phase === 'fight' && m <= 30);
+  const n = v => v.toLocaleString('vi-VN');
+  $('kills').innerHTML = `<span style="color:${TCOL[0]}">💬 ${n(S.cmt[0])} · ${n(S.kills[0])} hạ gục</span><span style="color:${TCOL[1]}">💬 ${n(S.cmt[1])} · ${n(S.kills[1])} hạ gục</span>`;
+}
+function setPhaseUI(r) {
+  const el = $('phase'); el.firstChild.textContent = PHASES[r][0]; el.querySelector('small').textContent = PHASES[r][1];
+}
+function endMatch() {
+  S.phase = 'result'; S.skillQ.length = 0;
+  for (const t of [0, 1]) if (S.hp[t] <= 0) paintHouses(t, 4);
+  giftQ.length = 0; annQ.length = 0; $('giftBanner').classList.remove('on');   // result screen stays clean
+  // winner: castle HP, then territory
+  const w = S.hp[0] !== S.hp[1] ? (S.hp[0] > S.hp[1] ? 0 : 1) : Math.abs(front - C.W / 2) < 20 ? -1 : front > C.W / 2 ? 0 : 1;
+  const mvp = t => [...S.players.values()].filter(p => p.side === t).sort((a, b) => b.pts - a.pts)[0];
+  const r = $('result');
+  r.querySelector('.w').textContent = w === -1 ? 'HOÀ!' : `${TEAM[w].toUpperCase()} THẮNG!`;
+  r.querySelector('.w').style.color = w === -1 ? '#fff' : TCOL[w];
+  const lines = [0, 1].map(t => mvp(t) ? `Công thần ${TEAM[t]}: ${mvp(t).name}` : '').filter(Boolean);
+  r.querySelector('.m').innerHTML = ''; for (const l of lines) { const d = document.createElement('div'); d.textContent = l; r.querySelector('.m').appendChild(d); }
+  r.classList.add('on');
+  moment('win', { side: w, mvp: w >= 0 && mvp(w) ? mvp(w).name : null });
+  let left = 10;
+  const tick = () => { r.querySelector('.s').textContent = `Trận mới sau ${left} giây · gõ 1 hoặc 2 để chọn lại phe`; if (left-- <= 0) newMatch(); else setTimeout(tick, 1000); };
+  sfx('win'); music('end');
+  tick();
+  if (w >= 0) for (let i = 0; i < 6; i++) setTimeout(() => burst(rnd(200, 880), rnd(600, 1300), w, 30, 2.2), i * 300);
+}
+
+// ================= sound =================
+const SND = {
+  music: ['nhac-nen.mp3', 0, .22], drum: ['freesound_community-war-drum-loop-103870.mp3', 0, .3],
+  gong: ['soundreality-big-gong-sound-effect-615182.mp3', 4, .5], whoosh: ['soundreality-whoosh-motion-243505.mp3', 1.4, .5],
+  impact: ['universfield-combat-impact-352458.mp3', 1.2, .35], spell: ['dragon-studio-epic-spell-impact-478364.mp3', 2.5, .6],
+  slash: ['u_xjrmmgxfru-sword-slash-01-266296.mp3', 1, .6], whooshHit: ['lordsonny-whoosh-hit-163595.mp3', 1.6, .6],
+  power: ['ribhavagrawal-power-up-type-1-230548.mp3', 2.2, .55], coin: ['yodguard-coin-collect-3-540190.mp3', 1, .45],
+  win: ['emand_edroff-victory-bell-success-fanfare-576275.mp3', 6, .6], heal: ['vadim_makes_sound-fantasy-healing-spell-cast-1-547831.mp3', 3, .5],
+  clash1: ['kiem1.mp3', .8, .14], clash2: ['kiem2.mp3', .8, .14],
+};   // name: [file, max seconds (0 = loop), volume]
+let AC = null, sndOn = false, master = null, duckG = null, loops = {}, lastSfx = {};
+const BUF = {};
+async function loadSounds() {
+  await Promise.all(Object.entries(SND).map(async ([k, [f]]) => {
+    if (BUF[k]) return;
+    try { BUF[k] = await AC.decodeAudioData(await (await fetch('sound/' + f)).arrayBuffer()); } catch (e) { console.warn('sound missing', f); }
+  }));
+}
+function sfx(name) {
+  if (!sndOn || !BUF[name]) return;
+  const t0 = AC.currentTime; if (t0 - (lastSfx[name] || 0) < .12) return; lastSfx[name] = t0;   // 500 viewers at once stay one sound
+  const [, max, vol] = SND[name], src = AC.createBufferSource(), g = AC.createGain();
+  src.buffer = BUF[name]; src.playbackRate.value = .95 + Math.random() * .1; g.gain.value = vol;
+  if (max) { g.gain.setValueAtTime(vol, t0 + max - .25); g.gain.linearRampToValueAtTime(0, t0 + max); }
+  src.connect(g).connect(master); src.start(t0, 0, max || undefined);
+}
+function loop(name, vol) {
+  if (!sndOn || !BUF[name]) return;
+  if (!loops[name]) { const src = AC.createBufferSource(), g = AC.createGain(); src.buffer = BUF[name]; src.loop = true; g.gain.value = 0; src.connect(g).connect(duckG); src.start(); loops[name] = g; }
+  loops[name].gain.setTargetAtTime(vol, AC.currentTime, .8);
+}
+// music follows the match: calm in round 1, drums join and grow, full in the final rush
+let musicState = ['round', 0];
+function music(kind, r) {
+  musicState = [kind, r]; if (!sndOn) return;
+  if (kind === 'end') { loop('music', .12); loop('drum', 0); return; }
+  loop('music', SND.music[2]); loop('drum', [0, .12, .22, .34][r]);
+}
+async function soundOn(on) {
+  if (on) {
+    try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); await AC.resume(); } catch { return; }
+    if (!master) { master = AC.createGain(); master.connect(AC.destination); duckG = AC.createGain(); duckG.connect(master); }
+    sndOn = true; await loadSounds(); music(...musicState);
+  } else { sndOn = false; for (const g of Object.values(loops)) g.gain.setTargetAtTime(0, AC.currentTime, .2); }
+}
+// tiny cartoon "poc" when a cat and a dog bump: soft, short, pitch and left/right follow the hit; at most ~12 per second
+let lastBump = 0;
+function bump(x) {
+  if (!sndOn) return;
+  const t0 = AC.currentTime; if (t0 - lastBump < .085) return; lastBump = t0;
+  const o = AC.createOscillator(), g = AC.createGain(), pan = AC.createStereoPanner ? AC.createStereoPanner() : null;
+  const f = rnd(260, 520); o.type = 'sine';
+  o.frequency.setValueAtTime(f, t0); o.frequency.exponentialRampToValueAtTime(f * .35, t0 + .07);
+  g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(rnd(.06, .1), t0 + .005); g.gain.exponentialRampToValueAtTime(.0001, t0 + .09);
+  let node = o.connect(g); if (pan) { pan.pan.value = Math.max(-.8, Math.min(.8, x / C.W * 2 - 1)); node = node.connect(pan); }
+  node.connect(master); o.start(t0); o.stop(t0 + .1);
+}
+// MC talking: background music drops so the voice stays clear (sound effects only dip a little)
+function duck(on) { if (duckG) duckG.gain.setTargetAtTime(on ? .35 : 1, AC.currentTime, .15); if (master) master.gain.setTargetAtTime(on ? .85 : 1, AC.currentTime, .15); }
+
+// bots keep both sides alive when chat is quiet
+setInterval(() => { if (S && S.phase === 'fight') for (const t of [0, 1]) if (count[t] < C.BOT_MIN_UNITS) spawnSquad(t, 4, null); }, 1500);
+
+// ================= host API (React/_base embeds this page) =================
+window.GAME_API = {
+  // ev: {type, user, name (safe to show), spoken (safe to read), text | count | coin}
+  event(ev) {
+    if (ev.name && ev.spoken) { spokenOf.set(cleanName(ev.name, ev.user), ev.spoken); if (spokenOf.size > 3000) spokenOf.delete(spokenOf.keys().next().value); }
+    if (ev.type === 'comment') return onComment(ev.user, ev.name, ev.text || '');
+    if (ev.type === 'like') { onLike(ev.user, ev.count || 1, ev.name); return {}; }
+    if (ev.type === 'share') { onShare(ev.user, ev.name); return {}; }
+    if (ev.type === 'gift') return onGift(ev.user, ev.name, ev.coin || 1, ev.count || 1);
+    if (ev.type === 'follow') { if (VOICE) logMC('follow', { name: cleanName(ev.name, ev.user) }); return {}; }
+    return {};
+  },
+  // owner typed a line on the control page: read it next, in the same queue (never two voices at once)
+  sayText(text, prio = 2) { if (VOICE && text) mcSay(String(text).slice(0, 300), prio + 5); },
+  stopVoice() { mc.q.length = 0; if (mc.audio) { mc.audio.pause(); mc.audio = null; } },
+  // the server lets only the newest stage page talk
+  setSpeaker(on) { mc.speaker = VOICE && on; if (!mc.speaker) { this.stopVoice(); soundOn(false); } else if (VOICE) soundOn(true); },
+  // MC settings saved by the control page: {mcOn, mcVoice, mcSpeed, mcExpr}
+  setMc(p) {
+    if (p.mcOn) $('mcOn').checked = p.mcOn !== '0';
+    if (p.mcVoice) { const sel = $('mcVoice'); if (![...sel.options].some(o => o.value === p.mcVoice)) sel.add(new Option(p.mcVoice, p.mcVoice)); sel.value = p.mcVoice; }
+    if (p.mcSpeed) $('mcSpeed').value = p.mcSpeed;
+    if (p.mcExpr) $('mcExpr').value = p.mcExpr;
+  },
+  setLength(sec) { matchLen = Math.max(60, Math.min(3600, +sec || C.MATCH_SEC)); newMatch(); },
+  jump(j) { S.time = matchLen * (1 - (j === 3 ? 1 - C.FINAL_FRAC : j === 1.5 ? C.RAT_AT : j / 3)) - .5; },
+  newMatch, phase: () => S.phase, duck, soundOn,
+  drainMoments: () => moments.splice(0),
+  stats: () => ({ units: units.length, ice: count[0], fire: count[1], dragons: dragons.length, hp: [...S.hp], kills: [...S.kills], front: Math.round(front), fps: fpsShown, phase: S.phase, time: Math.ceil(S.time), round: S.round, cmt: [...S.cmt], players: S.players.size, heart: S.heart.map(Math.floor), broken: [...S.broken], rat: rat ? Math.ceil(rat.hp) : null, fx: fxLayer.children.length + groundFx.children.length }),
+};
+
+// ================= standalone test panel =================
+// MC lines: several takes per moment so a 30-minute live doesn't sound like a loop.
+// [cười] [hắng giọng] [thở dài] are VieNeu v3 sound tags (experimental); they never show in the log.
+// Never asks for gifts, never reads comments, only the names we cleaned.
+const P = d => TEAM[d.side], p_ = d => TEAM[d.side].toLowerCase();
+const MC = {
+  newMatch: () => ['Trận mới rồi bà con ơi! Gõ 1 về phe Mèo, gõ 2 về phe Chó nha.', '[hắng giọng] Mèo với Chó lại chạm mặt nhau rồi. Gõ 1 theo Mèo, gõ 2 theo Chó, lẹ lên!'],
+  join: d => [`Chào ${d.names} vào phe ${P(d)}!`, `${d.names} vừa nhập hội phe ${P(d)}, chào nha!`, `Phe ${P(d)} có thêm ${d.names} rồi kìa!`],
+  gift: d => d.skill
+    ? [`Cảm ơn ${d.name} nha! ${d.skill} cho phe ${P(d)} luôn!`, `[cười] ${d.name} ra tay rồi, ${d.skill} tới liền!`, `Ui, ${d.skill} của ${d.name} kìa, phe bên kia chạy lẹ!`]
+    : [`Cảm ơn ${d.name}, thêm lính cho phe ${P(d)} nè!`, `${d.name} gửi quân tiếp viện cho phe ${P(d)}, cảm ơn nha!`],
+  lowCrowd: d => [
+    ...(d.name ? [`${d.name} ơi, một mình cân cả phe ${P(d)} luôn hả? Rủ thêm bạn vô phụ đi!`, `[cười] Phe ${P(d)} đang trông hết vào ${d.name} đó nha!`] : []),
+    'Sân đang rộng lắm nè. Ai vào gõ 1 hay gõ 2 là có lính ra liền.',
+    '[cười] Mèo với Chó đánh nhau mà chưa ai cổ vũ. Chọn phe đi mọi người!',
+    'Mới vào thì gõ 1 theo Mèo, gõ 2 theo Chó. Thả đủ năm nghìn tim là ra chiêu nha.',
+    `Phe ${TEAM[d.weak]} đang thiếu người, ai vào phe ${TEAM[d.weak]} cho cân đi!`,
+    'Mọi người nuôi chó hay nuôi mèo? Nuôi mèo gõ 1, nuôi chó gõ 2, coi bên nào đông hơn!',
+    'Hỏi thật nha, mèo nhà ai hay phá đồ? Có thì gõ 1 ủng hộ phe Mèo luôn!',
+    'Chó nhà ai hay sủa người lạ thì gõ 2 cho phe Chó cái coi!',
+    'Mỗi lần comment là thêm năm con lính ra sân đó, comment gì cũng tính hết!',
+    'Ai đang xem mà chưa chọn phe, gõ 1 hoặc 2 cái là có tên mình trên sân liền!',
+    '[cười] Mèo với Chó đang đánh hoà, ai vô phá thế trận giùm cái!',
+    ...(d.name ? [`${d.name} ơi, comment thêm vài câu là phe ${P(d)} có thêm lính liền đó!`, `Nãy giờ ${d.name} gánh phe ${P(d)} ghê quá, cảm ơn nha!`] : []),
+  ],
+  // nudges to share and bring friends in (every ~75s, never asks for gifts)
+  invite: d => [
+    'Ai có bạn mê mèo thì chia sẻ live rủ vô phe Mèo đi, đông mới vui!',
+    'Team chó đâu rồi? Chia sẻ cho mấy đứa bạn mê chó vô phe Chó đánh phụ nè!',
+    '[cười] Nhà ai nuôi mèo thì gọi con sen vô gõ 1, nhà nuôi chó thì gọi sen chó vô gõ 2 nha!',
+    'Bấm chia sẻ gửi cho đứa bạn hay cãi chó hay mèo đi, vô đây phân thắng thua luôn!',
+    `Phe ${TEAM[d.weak]} đang ít người quá, chia sẻ rủ thêm đồng đội cho phe ${TEAM[d.weak]} đi!`,
+  ],
+  follow: d => [`Cảm ơn ${d.name} đã theo dõi kênh nha!`, `[cười] ${d.name} vừa theo dõi kênh, chào mừng vô hội Mèo Chó!`],
+  share: d => [`Cảm ơn ${d.name} đã chia sẻ live! Phe ${P(d)} được thêm lính nè.`, `[cười] ${d.name} chia sẻ rồi kìa, rủ được ai thì bảo vô gõ số chọn phe nha!`],
+  quiet: () => ['Ai mới vào thì gõ 1 theo phe Mèo, gõ 2 theo phe Chó. Thả tim là ra chiêu đó nha!', '[hắng giọng] Live im re vậy ta. Chọn phe đi, gõ 1 hay 2, rồi thả tim cho vui nè!', 'Mèo hay Chó đây mọi người? Gõ 1 hoặc 2 là có lính ra sân liền.'],
+  dragon: d => d.name
+    ? [`Ối dồi ôi, ${d.name} gọi ${p_(d)} chúa ra trận rồi! Cảm ơn ${d.name} nha!`, `[cười] ${P(d)} chúa của ${d.name} tới rồi, bên kia coi chừng!`]
+    : [`Đủ năm chục nghìn tim, ${p_(d)} chúa ra trận!`, `[cười] Tim nhiều quá trời, ${p_(d)} chúa nhảy xuống sân luôn!`],
+  skill: d => [`Phe ${P(d)} đủ tim rồi, ${d.skill} nè!`, `[cười] Tim tới tấp, phe ${P(d)} tung ${d.skill} luôn!`, `${d.skill}! Cảm ơn mọi người thả tim cho phe ${P(d)}!`],
+  heartNear: d => [`Phe ${P(d)} còn ${d.left.toLocaleString('vi-VN')} tim nữa là ra ${d.skill}, thả tim lẹ lên!`, `Sắp tới rồi, phe ${P(d)} thêm ${d.left.toLocaleString('vi-VN')} tim nữa thôi!`],
+  round: d => [[''], ['Qua hiệp hai rồi, đánh mạnh lên nào!', '[hắng giọng] Hiệp hai! Ai chưa chọn phe thì vào lẹ còn kịp.'], ['Hiệp ba rồi, tim tính gấp rưỡi, giữ nhà cho chắc nha!'], ['Ba phút cuối, tim tính gấp đôi, dồn hết vào!', 'Ba phút cuối nha bà con! Tim gấp đôi, nhà sập được thật rồi đó!']][d.round],
+  shield: d => [`Nhà ${P(d)} có khiên rồi, sang hiệp sau mới phá tiếp được nha.`],
+  houseDown: d => [`Sập thêm một căn nhà ${P(d)} rồi, phe ${P(d)} gỡ lại đi!`, `Rầm! Nhà ${P(d)} mất thêm một căn.`, `[thở dài] Lại một căn nhà ${P(d)} đi tong.`],
+  rat: () => ['Vua Chuột tới phá rồi! Bên nào đánh nó nhiều hơn thì được mạnh thêm một phút.', '[hắng giọng] Ê, Vua Chuột vô sân kìa! Hai phe xử nó trước đi rồi tính tiếp.'],
+  ratDown: d => [`Phe ${P(d)} hạ được Vua Chuột, mạnh thêm một phút luôn!`, `[cười] Vua Chuột bị phe ${P(d)} hạ rồi, thưởng một phút mạnh hơn nè!`],
+  ratGone: () => ['[thở dài] Vua Chuột chạy mất rồi, không bên nào được thưởng.'],
+  dominate: d => [`Phe ${P(d)} đang lấn tới, bên kia gõ nhanh lên!`, `[cười] Phe ${P(d)} đẩy tới sát nhà người ta luôn rồi!`],
+  castleLow: d => [`Nhà ${P(d)} sắp sập hết rồi, cứu đi mọi người ơi!`, `[thở dài] Nhà ${P(d)} còn chút xíu à, phe ${P(d)} đâu rồi?`],
+  last30: () => ['Ba mươi giây cuối, dồn hết sức nào!'],
+  win: d => d.side < 0 ? ['Hoà! Hai phe ngang ngửa luôn.']
+    : [`Phe ${P(d)} thắng rồi!${d.mvp ? ` Công thần là ${d.mvp}.` : ''}`, `[cười] Phe ${P(d)} thắng nha!${d.mvp ? ` Cảm ơn công thần ${d.mvp}.` : ''}`],
+};
+// crowded room: the MC calls the match from real numbers, two facts per line
+function analysisLine() {
+  const facts = [];
+  const lead = count[0] > count[1] * 1.2 ? 0 : count[1] > count[0] * 1.2 ? 1 : -1;
+  facts.push(lead >= 0 ? `Phe ${TEAM[lead]} đang đông quân hơn, ${count[lead]} con so với ${count[1 - lead]} con.` : `Quân hai bên đang ngang ngửa, mỗi bên cỡ ${Math.round((count[0] + count[1]) / 2)} con.`);
+  const off = front - C.W / 2;
+  if (Math.abs(off) > 120) { const b = off > 0 ? 1 : 0; facts.push(`Chiến tuyến bị dồn sát nhà ${TEAM[b]} rồi, phe ${TEAM[b]} phải đẩy ra!`); }
+  const pct = S.hp.map(h => Math.round(h / C.CASTLE_HP * 100));
+  if (Math.abs(pct[0] - pct[1]) >= 5) { const w = pct[0] > pct[1] ? 0 : 1; facts.push(`Nhà ${TEAM[w]} còn ${pct[w]} phần trăm, nhà ${TEAM[1 - w]} chỉ còn ${pct[1 - w]} phần trăm.`); }
+  for (const t of [0, 1]) {
+    const i = C.HEART_MS.findIndex(m => m > S.heart[t]), m = C.HEART_MS[i], prev = i ? C.HEART_MS[i - 1] : 0, left = Math.ceil(m - S.heart[t]);
+    if ((m - S.heart[t]) / (m - prev) < .3) facts.push(`Phe ${TEAM[t]} còn ${left.toLocaleString('vi-VN')} tim nữa là ra ${SKILL[t][i]}, bên kia coi chừng!`);
+  }
+  if (S.kills[0] + S.kills[1] > 50) { const k = S.kills[0] >= S.kills[1] ? 0 : 1; facts.push(`Phe ${TEAM[k]} hạ ${S.kills[k].toLocaleString('vi-VN')} con rồi, bên kia mới ${S.kills[1 - k].toLocaleString('vi-VN')}.`); }
+  facts.push(`Còn ${Math.max(1, Math.ceil(S.time / 60))} phút nữa hết trận.`);
+  const a = facts.splice(Math.random() * facts.length | 0, 1)[0], b = facts.length ? facts[Math.random() * facts.length | 0] : '';
+  return (Math.random() < .25 ? '[hắng giọng] ' : '') + a + (b ? ' ' + b : '');
+}
+const lastTake = {};
+// pick a take, never the same one twice in a row for the same moment
+function takeOf(type, data) {
+  const list = (MC[type] && MC[type](data) || []).filter(Boolean); if (!list.length) return '';
+  let i = Math.random() * list.length | 0; if (list.length > 1 && i === lastTake[type]) i = (i + 1) % list.length;
+  lastTake[type] = i; return list[i];
+}
+const noTags = t => t.replace(/\[[^\]]+\]\s*/g, '');
+// ---- MC voice for the standalone test: one line at a time, skips stale lines, never reads raw comments ----
+const spokenOf = new Map();   // display name -> name the host made readable (from _base speakableName)
+const speakName = n => spokenOf.get(n) || String(n).replace(/[^\p{L}\p{N} ]/gu, ' ').replace(/\s+/g, ' ').trim() || 'bạn';
+const mc = { q: [], busy: false, lastAt: 0, joins: [[], []], smallAt: 0, inviteAt: performance.now(), speaker: VOICE, audio: null };
+const PRIO = { dragon: 3, gift: 2, win: 3, round: 3, rat: 3, ratDown: 2, houseDown: 2, last30: 3, newMatch: 3 };
+function mcSay(text, prio) {
+  mc.q.push({ text, prio, at: performance.now() });
+  mc.q.sort((a, b) => b.prio - a.prio || a.at - b.at);
+  if (mc.q.length > 4) mc.q.length = 4;   // cap: 500 people never build a backlog
+  mcNext();
+}
+async function mcNext() {
+  if (mc.busy || !$('mcOn').checked || !mc.speaker) return;
+  let line; while ((line = mc.q.shift()) && performance.now() - line.at > 20000);   // older than 20s: drop
+  if (!line) return;
+  mc.busy = true; mc.lastAt = performance.now();
+  try {
+    if (!sndOn) throw new Error('âm thanh đang tắt');
+    $('mcState').textContent = '⏳ đang tạo giọng';
+    const q = new URLSearchParams({ eng: 'vn', voice: $('mcVoice').value, temp: $('mcExpr').value, text: line.text });
+    const r = await fetch('/api/tts?' + q);
+    if (!r.ok) throw new Error('giọng đọc lỗi ' + r.status);
+    const url = URL.createObjectURL(await r.blob()), a = new Audio(url); mc.audio = a;
+    a.preservesPitch = true; a.playbackRate = +$('mcSpeed').value;   // faster without the chipmunk pitch
+    duck(true); $('mcState').textContent = '🗣 ' + noTags(line.text).slice(0, 40);
+    await new Promise((res, rej) => { a.onended = res; a.onerror = () => rej(new Error('không phát được')); a.play().catch(rej); });
+    URL.revokeObjectURL(url); mc.audio = null;
+  } catch (e) { $('mcState').textContent = '⚠ ' + String(e.message || e).slice(0, 60); await new Promise(r => setTimeout(r, 1500)); }
+  duck(false); mc.busy = false; mc.lastAt = performance.now();
+  setTimeout(mcNext, 250);
+}
+// joins are grouped: "Chào A, B và 5 bạn nữa vào phe Mèo!" at most every 8s (standalone only: the live host runs its own MC)
+if (VOICE) setInterval(() => {
+  const crowdNow = S && S.players.size >= 15, nowMs = performance.now();
+  // busy room: the match call comes first (every ~30s, jumps the queue), greetings are bundled every 20s
+  if (crowdNow && S.phase === 'fight' && nowMs - (mc.anaAt || 0) > 30000) { mc.anaAt = nowMs; mcSay(analysisLine(), 2); }
+  const greetGap = crowdNow ? 20000 : 8000;
+  for (const t of [0, 1]) {
+    const j = mc.joins[t]; if (!j.length || nowMs - (mc.joinAt || 0) < greetGap) continue;
+    mc.joinAt = nowMs;
+    const names = j.slice(0, 2).map(speakName), more = j.length - names.length;
+    mcSay(takeOf('join', { side: t, names: names.join(', ') + (more > 0 ? ` và ${more} bạn nữa` : '') }), 1);
+    mc.joins[t] = [];
+  }
+  // quiet live: few players -> the MC chats to them by name and invites more, every 25s; busier rooms get a rule reminder every 40s
+  if (!mc.busy && !mc.q.length && S && S.phase === 'fight') {
+    const ps = [...S.players.values()], few = ps.length <= 5, crowd = ps.length >= 15, idle = performance.now() - mc.lastAt;
+    if (few && idle > 25000) {
+      const pick = ps.length ? ps[Math.random() * ps.length | 0] : null;
+      const weak = ps.filter(p => p.side === 0).length <= ps.filter(p => p.side === 1).length ? 0 : 1;
+      mcSay(takeOf('lowCrowd', { name: pick && speakName(pick.name), side: pick ? pick.side : 0, weak }), 1);
+    } else if (!few && !crowd && idle > 40000) mcSay(takeOf('quiet', {}), 1);
+    // every ~75s, when the MC is free, invite people to share and bring their cat / dog friends
+    else if (idle > 12000 && performance.now() - mc.inviteAt > 75000) {
+      mc.inviteAt = performance.now();
+      const weak = ps.filter(p => p.side === 0).length <= ps.filter(p => p.side === 1).length ? 0 : 1;
+      mcSay(takeOf('invite', { weak }), 1);
+    }
+  }
+}, 8000);
+function logMC(type, data) {
+  if (type === 'join') { if (speakName(data.name) !== 'bạn') mc.joins[data.side].push(data.name); return; }   // unreadable names are not greeted
+  if (type === 'gift') {   // small gifts: one thank-you every 6s at most, skills always
+    if (!data.skill && performance.now() - mc.smallAt < 6000) return;
+    if (!data.skill) mc.smallAt = performance.now();
+  }
+  const said = takeOf(type, data && data.name ? { ...data, name: speakName(data.name) } : data); if (!said) return;
+  mcSay(said, PRIO[type] || 1);
+  const line = noTags(said);
+  const el = $('mclog'); const d = document.createElement('div');
+  d.textContent = `${new Date().toLocaleTimeString('vi-VN')}  ${line}`; el.prepend(d);
+  while (el.children.length > 40) el.lastChild.remove();
+}
+if (!EMBED) {
+  const HO = ['Nguyễn', 'Trần', 'Lê', 'Phạm', 'Hoàng', 'Vũ', 'Đặng', 'Bùi', 'Đỗ'];
+  const TEN = ['Lan Anh', 'Minh Tuấn', 'Thu Hà', 'Quốc Bảo', 'Ngọc Mai', 'Hoàng Long', 'Bích Trâm', 'Đức Anh', 'Kim Ngân', 'Gia Huy', 'Khánh Vy', 'Tuấn Kiệt'];
+  let uid = 0;
+  const fake = () => ({ user: 'u' + (++uid), name: Math.random() < .1 ? `${TEN[uid % TEN.length]} 🌸` : `${HO[uid % HO.length]} ${TEN[(uid * 7) % TEN.length]}` });
+  let giftSide = 0, autoN = 0, bias = .5;
+  const lastBy = [null, null];
+  const sel = (attr, btn) => { document.querySelectorAll(`[${attr}]`).forEach(b => b.classList.toggle('on', b === btn)); };
+  document.querySelectorAll('[data-act]').forEach(b => b.onclick = () => {
+    const a = b.dataset.act, p = fake();
+    if (a === 'c1' || a === 'c2') { const t = a === 'c1' ? 0 : 1; onComment(p.user, p.name, String(t + 1)); lastBy[t] = p; }
+    if (a === 'chat') for (const t of [0, 1]) if (lastBy[t]) onComment(lastBy[t].user, lastBy[t].name, 'hay quá');
+    if (a === 'like') for (const t of [0, 1]) if (lastBy[t]) onLike(lastBy[t].user, 30);
+    if (a === 'h1k0' || a === 'h1k1') { const t = +a.slice(-1); onComment(p.user, p.name, String(t + 1)); onLike(p.user, 1000); }
+    if (a === 'share') for (const t of [0, 1]) if (lastBy[t]) onShare(lastBy[t].user);
+  });
+  document.querySelectorAll('[data-side]').forEach(b => b.onclick = () => { giftSide = +b.dataset.side; sel('data-side', b); });
+  document.querySelectorAll('[data-gift]').forEach(b => b.onclick = () => {
+    const p = fake(); onComment(p.user, p.name, String(giftSide + 1));
+    onGift(p.user, p.name, +b.dataset.gift, +(b.dataset.n || 1));
+  });
+  document.querySelectorAll('[data-len]').forEach(b => b.onclick = () => { matchLen = +b.dataset.len; sel('data-len', b); newMatch(); });
+  // jump the clock to a round (1 = round 2, 1.5 = rat, 2 = round 3, 3 = final rush)
+  document.querySelectorAll('[data-jump]').forEach(b => b.onclick = () => { const j = +b.dataset.jump; S.time = matchLen * (1 - (j === 3 ? 1 - C.FINAL_FRAC : j === 1.5 ? C.RAT_AT : j / 3)) - .5; });
+  fetch('/api/voices').then(r => r.json()).then(d => { const sel = $('mcVoice'); for (const v of d.data || []) if (v.id !== 'Adam bựa') sel.add(new Option(`${v.name} (${v.gender === 'female' ? 'nữ' : 'nam'})`, v.id)); }).catch(() => {});
+  $('mcOn').onchange = () => mcNext();
+  $('mcSpeed').oninput = () => { $('mcSpeedV').textContent = (+$('mcSpeed').value).toFixed(2) + 'x'; };
+  $('mcExpr').oninput = () => { $('mcExprV').textContent = (+$('mcExpr').value).toFixed(2); };   // higher = livelier but less stable
+  $('mcTest').onclick = async () => { if (!sndOn) $('snd').click(); mcSay(takeOf('gift', { name: 'Hoàng Long', side: 0, skill: 'Mưa cá khô' }), 9); };
+  $('snd').onclick = async () => { const b = $('snd'); await soundOn(!sndOn); b.textContent = sndOn ? '🔊 Tắt âm thanh' : '🔇 Bật âm thanh'; b.setAttribute('aria-pressed', sndOn); };   // currentTarget is gone after await
+  $('newMatch').onclick = newMatch;
+  document.querySelectorAll('[data-bias]').forEach(b => b.onclick = () => { bias = +b.dataset.bias; sel('data-bias', b); });
+  // auto live: people arrive over the first ~40s, then comment every 4-14s, like, and sometimes gift
+  let people = [];
+  document.querySelectorAll('[data-auto]').forEach(b => b.onclick = () => {
+    autoN = +b.dataset.auto; sel('data-auto', b);
+    people = Array.from({ length: autoN }, () => ({ ...fake(), side: Math.random() < bias ? 0 : 1, at: performance.now() + rnd(0, 40000), next: 0, joined: false }));
+  });
+  setInterval(() => {
+    const now = performance.now();
+    for (const p of people) {
+      if (now < p.at || now < p.next) continue;
+      if (!p.joined || (S.phase === 'fight' && !S.players.has(p.user))) { onComment(p.user, p.name, String(p.side + 1)); p.joined = true; }
+      else onComment(p.user, p.name, ['hay', 'cố lên', '❤️', 'đánh đi'][Math.random() * 4 | 0]);
+      if (Math.random() < .3) onLike(p.user, 5 + (Math.random() * 25 | 0));
+      const r = Math.random();
+      if (r < .03) onGift(p.user, p.name, 1, 1 + (Math.random() * 5 | 0));
+      else if (r < .034) onGift(p.user, p.name, 10, 1);
+      else if (r < .0365) onGift(p.user, p.name, 20, 1);
+      else if (r < .0375) onGift(p.user, p.name, 50, 1);
+      else if (r < .0379) onGift(p.user, p.name, 100, 1);
+      p.next = now + rnd(4000, 14000);
+    }
+  }, 100);
+  // ---- scripted 30-minute live: viewers trickle in, three rushes, a big donor, a packed final ----
+  // [minute, people joining, over seconds, share picking Mèo, rush seconds (everyone 3x busier), label]
+  const SCRIPT = [
+    [0, 12, 120, .5, 0, 'Mở live, người vào lác đác'],
+    [2, 30, 360, .5, 0, 'Người vào đều đều'],
+    [8, 60, 40, .65, 60, 'DỒN DẬP 1: lên đề xuất, phe Mèo đông'],
+    [11, 15, 240, .5, 0, 'Lắng xuống, vài người rời đi'],
+    [15, 45, 30, .3, 75, 'DỒN DẬP 2: Vua Chuột, phe Chó dồn quân'],
+    [19, 20, 300, .5, 0, 'Đều đều'],
+    [22, 4, 20, .5, 30, 'Người tặng quà to ghé vào'],
+    [27, 150, 60, .5, 180, 'DỒN DẬP 3: 3 phút cuối, đông nhất'],
+  ];
+  // quiet live: a handful of people the whole match, a few more at the end
+  const SCRIPT_LOW = [
+    [0, 2, 240, .5, 0, 'Vắng: 1-2 người vào'],
+    [6, 3, 480, .5, 0, 'Vẫn vắng, có người rời'],
+    [16, 3, 360, .5, 0, 'Thêm vài người'],
+    [26, 6, 120, .5, 45, 'Cuối trận có thêm chút người'],
+  ];
+  let script = SCRIPT;
+  let sim = null;   // {crowd: [...], fired: Set, rushes: [[from,to]], label}
+  const simEl = () => matchLen - S.time;   // game seconds since kickoff (follows x5 and slow motion)
+  $('simLow').onclick = () => { script = SCRIPT_LOW; startSim(); };
+  $('sim30').onclick = () => { script = SCRIPT; startSim(); };
+  const startSim = () => {
+    people = []; sel('data-auto', document.querySelector('[data-auto="0"]'));
+    matchLen = 1800; sel('data-len', document.querySelector('[data-len="1800"]')); newMatch();
+    sim = { crowd: [], fired: new Set(), rushes: [], label: '' };
+  };
+  document.querySelectorAll('[data-speed]').forEach(b => b.onclick = () => { simSpeed = +b.dataset.speed; sel('data-speed', b); });
+  setInterval(() => {
+    if (!sim || !S) return;
+    if (S.phase !== 'fight') { sim.label = 'Hết trận'; $('simInfo').textContent = 'Mô phỏng: hết trận, đã dừng.'; sim = null; return; }
+    const el = simEl(), k = matchLen / 1800;
+    script.forEach(([min, n, over, share, rush, label], i) => {
+      if (sim.fired.has(i) || el < min * 60 * k) return;
+      sim.fired.add(i); sim.label = label;
+      if (rush) sim.rushes.push([el, el + rush * k]);
+      const donor = label.startsWith('Người tặng quà to');
+      for (let j = 0; j < n; j++) {
+        const final = min >= 27;
+        sim.crowd.push({ ...fake(), side: Math.random() < share ? 0 : 1, at: el + rnd(0, over * k), next: 0, joined: false,
+          until: final ? 1e9 : el + rnd(180, 900) * k,   // most viewers stay 3-15 minutes, the final crowd stays to the end
+          donor: donor ? [100, 100, 199, 50][j] : 0 });
+      }
+    });
+    const rush = sim.rushes.some(([a, b]) => el >= a && el <= b), busy = rush ? 3 : 1;
+    let active = 0;
+    for (const p of sim.crowd) {
+      if (el < p.at || el > p.until) continue;
+      active++;
+      if (el < p.next) continue;
+      if (!p.joined || !S.players.has(p.user)) { onComment(p.user, p.name, String(p.side + 1)); p.joined = true; }
+      else onComment(p.user, p.name, ['hay', 'cố lên', '❤️', 'đánh đi'][Math.random() * 4 | 0]);
+      if (p.donor) { onGift(p.user, p.name, p.donor, 1); p.donor = 0; }
+      if (Math.random() < (rush ? .8 : .35)) onLike(p.user, rush ? 20 + (Math.random() * 60 | 0) : 5 + (Math.random() * 25 | 0));
+      const r = Math.random() / busy;   // rushes also bring more gifts
+      if (r < .02) onGift(p.user, p.name, 1, 1 + (Math.random() * 5 | 0));
+      else if (r < .023) onGift(p.user, p.name, 10, 1);
+      else if (r < .025) onGift(p.user, p.name, 20, 1);
+      else if (r < .0258) onGift(p.user, p.name, 50, 1);
+      else if (r < .0261) onGift(p.user, p.name, 100, 1);
+      p.next = el + rnd(6, 20) / busy;
+    }
+    const m = el / 60 / k;
+    $('simInfo').textContent = `Mô phỏng: phút ${m.toFixed(1)}/30 · ${active} người đang xem · ${rush ? '🔥 ' : ''}${sim.label}`;
+  }, 100);
+  setInterval(() => {
+    fpsShown = fpsFrames; fpsFrames = 0;
+    const s = GAME_API.stats();
+    $('stats').innerHTML = `<b>${s.fps} fps</b> · lính ${s.units} (Mèo ${s.ice} / Chó ${s.fire}) · con chúa ${s.dragons} · hiệu ứng ${s.fx}<br>thành ${s.hp.map(Math.ceil).join(' / ')} · nhà sập ${s.broken.join(' / ')} · tim ${s.heart.join(' / ')} · hiệp ${s.round + 1}${s.rat !== null ? ' · chuột ' + s.rat : ''}<br>hạ gục ${s.kills.join(' / ')} · ${s.phase} ${s.time}s · người chơi ${S.players.size}`;
+  }, 1000);
+} else {
+  setInterval(() => { fpsShown = fpsFrames; fpsFrames = 0; }, 1000);
+  // stage inside LIVE Studio plays sound; the silent preview passes &mute=1. Browsers need one click before audio starts.
+  if (QS.get('mute') !== '1') { soundOn(true); addEventListener('pointerdown', () => { if (!AC || AC.state !== 'running') soundOn(true); }); }
+}
+
+// start once fonts are ready so name tags use the right typeface
+document.fonts.ready.then(() => { newMatch(); });
+</script>

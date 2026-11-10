@@ -450,11 +450,45 @@ async function googleTts(text: string): Promise<Buffer> {
   return Buffer.concat(parts);
 }
 
+// ---------- Giọng VieNeu (MC "Adam bựa"), chạy riêng ở E:\02_AI\VieNeu-TTS cổng 8000 ----------
+// Game gọi /api/tts?eng=vn&voice=...&temp=...&text=...; VieNeu chưa bật hoặc lỗi thì tự đọc bằng Edge như cũ.
+const VIENEU_URL = process.env.VIENEU_URL || 'http://127.0.0.1:8000';
+async function vieneuTts(text: string, voice: string, temperature: number): Promise<Buffer> {
+  const r = await fetch(`${VIENEU_URL}/v1/audio/speech`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: 'vieneu', input: text, voice, response_format: 'wav', temperature }),
+    signal: AbortSignal.timeout(15000),
+  });
+  if (!r.ok) throw new Error(`VieNeu ${r.status}`);
+  const wav = Buffer.from(await r.arrayBuffer());
+  // VieNeu gửi WAV kiểu "chưa biết độ dài"; ghi lại độ dài thật để trình duyệt đọc chuẩn
+  const di = wav.indexOf('data', 12);
+  if (wav.toString('ascii', 0, 4) === 'RIFF' && di > 0) {
+    wav.writeUInt32LE(wav.length - 8, 4);
+    wav.writeUInt32LE(wav.length - di - 8, di + 4);
+  }
+  return wav;
+}
+
 const ttsCache = new Map<string, Buffer>();
 app.get('/api/tts', async (req, res) => {
   try {
     const text = String(req.query.text || '').trim().slice(0, 1500);
     if (!text) return res.status(400).send('Thiếu text');
+    if (req.query.eng === 'vn') {
+      // tên giọng chỉ gồm chữ/số/khoảng trắng (VieNeu tự từ chối tên không có)
+      const voice = String(req.query.voice || 'Adam bựa').replace(/[^\p{L}\p{N} ]/gu, '').slice(0, 40) || 'Adam bựa';
+      const temp = Math.min(1.5, Math.max(0.3, Number(req.query.temp) || 0.95));
+      try {
+        const wav = await vieneuTts(text.slice(0, 400), voice, temp);
+        res.setHeader('Content-Type', 'audio/wav');
+        res.setHeader('Cache-Control', 'no-store');
+        return res.send(wav);
+      } catch (err) {
+        console.warn('VieNeu lỗi, đọc bằng Edge:', err instanceof Error ? err.message : err);
+      }
+    }
     const rate = Math.min(1.5, Math.max(0.5, Number(req.query.rate) || 1));
     const hype = req.query.hype === '1';
     // chỉ nhận 2 giọng này, không cho truyền tên giọng tuỳ ý
